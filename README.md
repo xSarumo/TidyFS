@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/header.png?raw=true" alt="TidyFS Header" width="100%">
+  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/header.png" alt="TidyFS Header" width="100%">
 </p>
 
 ---
@@ -28,7 +28,7 @@ The project is written in **Go** and **Python**:
 
 ## Preview
 <p align="center">
-  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png?raw=true" alt="TidyFS Header" width="65%">
+  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Header" width="65%">
 </p>
 
 ## How It Works
