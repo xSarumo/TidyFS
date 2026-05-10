@@ -1,4 +1,5 @@
-# TidyFS
+![TidyFS Header](https://github.com/xSarumo/xSarumo/blob/main/TidyFS/header.png?raw=true)
+---
 
 **TidyFS** is a smart file organizer for Linux with a terminal user interface. It scans a folder with documents, classifies files by their content and filename, and then displays or organizes them into clear categories.
 
@@ -21,6 +22,9 @@ The project is written in **Go** and **Python**:
 * Classification using an ML model based on TF-IDF features and Logistic Regression.
 * Additional filename-based rules for common document types: resumes, certificates, lab reports, notes, licenses, tickets, statements, etc.
 * Protection against dangerous directory cleanup: TidyFS refuses to clean `/`, the home directory, and conflicting source/target paths.
+
+## Preview
+![TidyFS preview](https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png?raw=true)
 
 ## How It Works
 
