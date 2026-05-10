@@ -1,0 +1,4110 @@
+[
+  {
+    "text": "датасет",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "датасеты",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "набор данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "наборы данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "datasets",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "training set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "valid dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тренировочная выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "обучающая выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тестовая выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "валидационная выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "аннотация данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "размеченные данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "метки классов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "классы объектов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "labeled data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "labelled data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "ground truth",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "target variable",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "feature matrix",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "class label",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "classification dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "regression dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "csv dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "parquet",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataframe",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data frame",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "таблица данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "исходные данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "предобработка данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data preprocessing",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data cleaning",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "метаданные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "corpus",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "корпус текстов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "text corpus",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "sample dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset description",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data annotation",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data labeling",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "справка с места учебы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка с места учёбы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "студенческая справка",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка об обучении",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "академическая справка",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка обучающегося",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "является студентом",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "является студенткой",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается в университете",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается в институте",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается по программе",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "студент группы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "студентка группы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "период обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "очная форма обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "заочная форма обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "очно-заочная форма обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "дата зачисления",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "приказ о зачислении",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "зачислен приказом",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "направление подготовки",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "номер студенческого",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждает обучение",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждение обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "student certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "study certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "student status certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "certificate of enrollment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "certificate of enrolment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "enrollment certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "enrolment certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "academic certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "proof of enrollment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "proof of enrolment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "university certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "домашнее задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашняя работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "дз",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашка",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание на дом",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "самостоятельная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "самостоятельное задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "контрольная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "проверочная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "классная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "учебное задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "вариант задания",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "номер задания",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решение задач",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решить задачи",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задачи для решения",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "упражнение",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "упражнения",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "ответы к заданиям",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание 1",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание 2",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание 3",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "homework",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "home assignment",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "take-home",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "worksheet",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem set",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problemset",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "classwork",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "self study",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "independent work",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "test work",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "variant task",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "solve the problems",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem 1",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem 2",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem 3",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "exercise 1",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "exercise 2",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "exercise 3",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "tasks for practice",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "practice problems",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашнее упражнение",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашние упражнения",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "лабораторная работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторные работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный отчет",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный отчёт",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчет по лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчёт по лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "цель лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "ход лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "вывод по лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная установка",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "экспериментальная установка",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "схема лабораторной установки",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный практикум",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "физический практикум",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторное задание",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторное занятие",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "журнал лабораторных работ",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "протокол лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "обработка результатов лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "результаты измерений в лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "погрешность измерений",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "расчет погрешности",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "расчёт погрешности",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "абсолютная погрешность",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "относительная погрешность",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "контрольные вопросы к лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory assignment",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory exercise",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory practical",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory setup",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "experimental setup",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab setup",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "measurement error",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "error calculation",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "uncertainty calculation",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "control questions",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "results processing",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab6",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab7",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab8",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab9",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab10",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_6",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-6",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "os_lab",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_os",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "physlab",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "physics lab",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная_работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная №",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work no",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "индивидуальный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "индивидуальныи проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "индивидуальный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "проектная работа",
+    "category": "Education/Project"
+  },
+  {
+    "text": "учебный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "исследовательский проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "курсовой проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "командный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "групповой проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "тема проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "цель проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "актуальность проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "паспорт проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "защита проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "презентация проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "план проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "этапы проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "результаты проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "проектная деятельность",
+    "category": "Education/Project"
+  },
+  {
+    "text": "individual project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "student project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "course project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "research project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "team project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "group project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project work",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project proposal",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project report",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project presentation",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project plan",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project stages",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project results",
+    "category": "Education/Project"
+  },
+  {
+    "text": "capstone project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "проект по теме",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project on",
+    "category": "Education/Project"
+  },
+  {
+    "text": "final project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "semester project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "transcript:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "video transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "audio transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "youtube transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка аудио",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка записи",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "транскрипт видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "транскрибация",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "таймкод",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "таймкоды",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "timestamps",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "timecode",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:01",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "-->",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "(00:00)",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "говорящий 1",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "говорящий 2",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "спикер 1",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "спикер 2",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "voice recording",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "audio recording",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "запись голоса",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "голосовое сообщение",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "youtu.be",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "watch?v=",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "подписывайтесь",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "ссылка в описании",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "в этом видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "in this video",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subscribe",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "link in description",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "synced and corrected",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "synced by",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subtitles by",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "addic7ed",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "opensubtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка интервью",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "transcribed by",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "auto-generated transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "captions",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "closed captions",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "caption file",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "voice transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "audio transcription",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "video transcription",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "художественная литература",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературное произведение",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературный текст",
+    "category": "Media/Books"
+  },
+  {
+    "text": "художественный текст",
+    "category": "Media/Books"
+  },
+  {
+    "text": "текст романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "фрагмент книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "отрывок из книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "страницы книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "главы книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "содержание книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "автор книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "сборник рассказов",
+    "category": "Media/Books"
+  },
+  {
+    "text": "электронная книга",
+    "category": "Media/Books"
+  },
+  {
+    "text": "печатное издание",
+    "category": "Media/Books"
+  },
+  {
+    "text": "книжное издание",
+    "category": "Media/Books"
+  },
+  {
+    "text": "роман в главах",
+    "category": "Media/Books"
+  },
+  {
+    "text": "пролог",
+    "category": "Media/Books"
+  },
+  {
+    "text": "эпилог",
+    "category": "Media/Books"
+  },
+  {
+    "text": "предисловие",
+    "category": "Media/Books"
+  },
+  {
+    "text": "послесловие",
+    "category": "Media/Books"
+  },
+  {
+    "text": "isbn",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "books.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "книга.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "роман.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "ebook",
+    "category": "Media/Books"
+  },
+  {
+    "text": "e-book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "literary work",
+    "category": "Media/Books"
+  },
+  {
+    "text": "literary text",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book excerpt",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel text",
+    "category": "Media/Books"
+  },
+  {
+    "text": "story collection",
+    "category": "Media/Books"
+  },
+  {
+    "text": "printed book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book chapter",
+    "category": "Media/Books"
+  },
+  {
+    "text": "chapter of the book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "author's note",
+    "category": "Media/Books"
+  },
+  {
+    "text": "copyright page",
+    "category": "Media/Books"
+  },
+  {
+    "text": "preface",
+    "category": "Media/Books"
+  },
+  {
+    "text": "afterword",
+    "category": "Media/Books"
+  },
+  {
+    "text": "prologue",
+    "category": "Media/Books"
+  },
+  {
+    "text": "epilogue",
+    "category": "Media/Books"
+  },
+  {
+    "text": "00:00)",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00 -",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00 —",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "моё резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "мое резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "резюме кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "анкета кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "résumé",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "curriculum vitae",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate cv",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate profile",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "сопроводительное письмо",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "мотивационное письмо",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cover letter",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "motivation letter",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "опыт работы",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "профессиональный опыт",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "предыдущий опыт работы",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "релевантный опыт",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "work experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "employment history",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "previous employment",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "relevant experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "ключевые навыки",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "профессиональные навыки",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "технические навыки",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "навыки и компетенции",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "key skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "technical skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "core competencies",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "образование в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "достижения в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "профессиональные достижения",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "career achievements",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional achievements",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "обо мне в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "о себе в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "personal summary",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional summary",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "summary of qualifications",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "career objective",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "desired position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "желаемая должность",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "position applied",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "applying for the position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готов к релокации",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готова к релокации",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "available for relocation",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готов к удаленной работе",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готов к удалённой работе",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "available for remote work",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "hh.ru/resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "headhunter resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "linkedin profile",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "github profile",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "portfolio link",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "ссылка на портфолио",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "dataset.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset.json",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train.parquet",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test.parquet",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "описание датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "структура датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset structure",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset schema",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data schema",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "label mapping",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "обучающий набор данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тестовый набор данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "название книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "глава книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "первая глава",
+    "category": "Media/Books"
+  },
+  {
+    "text": "вторая глава",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературный отрывок",
+    "category": "Media/Books"
+  },
+  {
+    "text": "отрывок романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel chapter",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book title",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book author",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book content",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction novel",
+    "category": "Media/Books"
+  },
+  {
+    "text": "transcript text",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speech transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка речи",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифрованный текст",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст расшифровки",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subtitle file",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "srt subtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "vtt subtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажёр",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажер",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажёры",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажеры",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "интернатура",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "программа стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажерская программа",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажёрская программа",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "летняя стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "зимняя стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "оплачиваемая стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "неоплачиваемая стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка в компании",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка для студентов",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка для выпускников",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка разработчика",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка аналитика",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "офер на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internships",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "summer internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "winter internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "paid internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "unpaid internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship program",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "intern program",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "graduate internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "student internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "software engineering internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "data analyst internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "intern offer",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "отбор на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "этап отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "следующий этап отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "приглашаем на следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "пригласить на следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "прошел в следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "прошёл в следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship selection",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship selection stage",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "next internship stage",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "next stage of internship selection",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "тестовое задание на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "тестовое задание для стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "тестовое задание и видеоинтервью",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "видеоинтервью на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "видео интервью на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "собеседование на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "интервью на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн решения для стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн записи видеоинтервью",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "coding task for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "test task for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "technical assignment for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "video interview for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship video interview",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "interview for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship deadline",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "application deadline for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship application",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship application process",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship recruitment",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship recruiting",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "campus internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "campus recruitment internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "young professionals internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "graduate program internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internships@",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internships@avito",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "авито стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка авито",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "github classroom для стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "приватный репозиторий github classroom",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "полезные материалы для отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "команда стажировок",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "команда internships",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "резюме разработчика",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "резюме аналитика",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "резюме студента",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "student resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "developer resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "analyst resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv developer",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv analyst",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "опыт стажировки в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "internship experience on resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "тестовое задание по курсу",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "учебное тестовое задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание для самостоятельной работы",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "вариант самостоятельной работы",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "контрольная работа вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "лабораторная работа 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab report 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab report 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "индивидуальный учебный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "защита индивидуального проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "тема индивидуального проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "паспорт индивидуального проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "individual student project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "student research project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "00:00 speaker",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:01 speaker",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "voice transcript text",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст расшифровки видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст расшифровки аудио",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "автоматические субтитры",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "файл субтитров",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "isbn:",
+    "category": "Media/Books"
+  },
+  {
+    "text": "isbn 978",
+    "category": "Media/Books"
+  },
+  {
+    "text": "оглавление книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "содержание романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "электронная версия книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book isbn",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel excerpt",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction excerpt",
+    "category": "Media/Books"
+  },
+  {
+    "text": "data/train",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data/test",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset statistics",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "label distribution",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "class distribution",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разделение датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "статистика датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "распределение классов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка корпуса",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "корпус данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "обучающие данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тестовые данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "отчёт лабораторная работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчет лабораторная работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный практикум по физике",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "physics laboratory report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "00:00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00:01",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "1\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "2\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1  (",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2  (",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры к видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка youtube",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "youtube subtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "video captions",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "глава первая",
+    "category": "Media/Books"
+  },
+  {
+    "text": "глава вторая",
+    "category": "Media/Books"
+  },
+  {
+    "text": "отрывок из романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "фрагмент романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературный фрагмент",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book fragment",
+    "category": "Media/Books"
+  },
+  {
+    "text": "резюме на должность",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv for position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "resume for position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate work experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "опыт работы кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "ключевые навыки кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "методические указания",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "методические рекомендации",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "методическое пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебное пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно-методическое пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно методическое пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно-методические материалы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно методические материалы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно-методические материалы дисциплины",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебные материалы по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "рабочая программа дисциплины",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "рабочая программа",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебная программа",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "силлабус",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "электронный учебник",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "курс лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспект лекции",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспект по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспект по теме",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "лекционные материалы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "лекционные материалы курса",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "лекционные материалы по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы лекции",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы курса",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретические сведения",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретические сведения по теме",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретический материал по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретические материалы по теме",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "экзаменационные вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "вопросы к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "экзаменационные билеты",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "зачетные вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "зачётные вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "вопросы к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "вопросы к зачету",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "подготовка к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "подготовка к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "подготовка к зачету",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы к зачету",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы для подготовки к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "повторение перед экзаменом",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "блиц-вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "блиц вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "шпаргалка к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "шпаргалка по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course materials",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course study materials",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "study materials for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "study guide for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course guide",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course handbook",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course syllabus",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "lecture notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course lecture notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "lecture handout",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "lecture materials",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam questions",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam preparation",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam review",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam review notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "question bank",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "revision notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "review notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "cheat sheet for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "theoretical material for course",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "датасет.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "датасет.json",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "датасет.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "набор данных csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "набор данных json",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "структура набора данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "описание набора данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "распределение меток",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "валидационные данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "training data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "labeled dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "annotated dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "лабораторная физика",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный стенд",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторные измерения",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory measurements",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "2 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "2ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "2_ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "2ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "3 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "3ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "3_ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "3ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "форма 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "форма 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 2 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка по форме 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка по форме 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "форма справки о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "сведения о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "доходы физического лица",
+    "category": "Finance"
+  },
+  {
+    "text": "налог на доходы физических лиц",
+    "category": "Finance"
+  },
+  {
+    "text": "ндфл справка",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая декларация",
+    "category": "Finance"
+  },
+  {
+    "text": "декларация 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "декларация 3 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговый вычет",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая база",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "исчисленная сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "удержанная сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "исчислено налога",
+    "category": "Finance"
+  },
+  {
+    "text": "удержано налога",
+    "category": "Finance"
+  },
+  {
+    "text": "не удержано налога",
+    "category": "Finance"
+  },
+  {
+    "text": "код дохода",
+    "category": "Finance"
+  },
+  {
+    "text": "код вычета",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма вычета",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговый агент",
+    "category": "Finance"
+  },
+  {
+    "text": "код налогового органа",
+    "category": "Finance"
+  },
+  {
+    "text": "код ифнс",
+    "category": "Finance"
+  },
+  {
+    "text": "код октмо",
+    "category": "Finance"
+  },
+  {
+    "text": "признак справки",
+    "category": "Finance"
+  },
+  {
+    "text": "номер корректировки",
+    "category": "Finance"
+  },
+  {
+    "text": "кассовый чек",
+    "category": "Finance"
+  },
+  {
+    "text": "товарный чек",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный чек",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный документ",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный признак",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный накопитель",
+    "category": "Finance"
+  },
+  {
+    "text": "qr-код чека",
+    "category": "Finance"
+  },
+  {
+    "text": "квитанция об оплате",
+    "category": "Finance"
+  },
+  {
+    "text": "платежное поручение",
+    "category": "Finance"
+  },
+  {
+    "text": "платёжное поручение",
+    "category": "Finance"
+  },
+  {
+    "text": "платежный документ",
+    "category": "Finance"
+  },
+  {
+    "text": "платёжный документ",
+    "category": "Finance"
+  },
+  {
+    "text": "счет на оплату",
+    "category": "Finance"
+  },
+  {
+    "text": "счёт на оплату",
+    "category": "Finance"
+  },
+  {
+    "text": "банковская выписка",
+    "category": "Finance"
+  },
+  {
+    "text": "выписка по счету",
+    "category": "Finance"
+  },
+  {
+    "text": "выписка по счёту",
+    "category": "Finance"
+  },
+  {
+    "text": "акт сверки",
+    "category": "Finance"
+  },
+  {
+    "text": "акт сверки взаиморасчетов",
+    "category": "Finance"
+  },
+  {
+    "text": "акт сверки взаиморасчётов",
+    "category": "Finance"
+  },
+  {
+    "text": "приходный кассовый ордер",
+    "category": "Finance"
+  },
+  {
+    "text": "расходный кассовый ордер",
+    "category": "Finance"
+  },
+  {
+    "text": "tax return",
+    "category": "Finance"
+  },
+  {
+    "text": "tax declaration",
+    "category": "Finance"
+  },
+  {
+    "text": "tax deduction",
+    "category": "Finance"
+  },
+  {
+    "text": "taxable income",
+    "category": "Finance"
+  },
+  {
+    "text": "tax agent",
+    "category": "Finance"
+  },
+  {
+    "text": "tax certificate",
+    "category": "Finance"
+  },
+  {
+    "text": "income certificate",
+    "category": "Finance"
+  },
+  {
+    "text": "certificate of income",
+    "category": "Finance"
+  },
+  {
+    "text": "income tax certificate",
+    "category": "Finance"
+  },
+  {
+    "text": "payment receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "sales receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "cash receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "tax invoice",
+    "category": "Finance"
+  },
+  {
+    "text": "payment invoice",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice number",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice total",
+    "category": "Finance"
+  },
+  {
+    "text": "receipt number",
+    "category": "Finance"
+  },
+  {
+    "text": "receipt total",
+    "category": "Finance"
+  },
+  {
+    "text": "bank statement",
+    "category": "Finance"
+  },
+  {
+    "text": "payment order",
+    "category": "Finance"
+  },
+  {
+    "text": "fiscal receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "fiscal document",
+    "category": "Finance"
+  },
+  {
+    "text": "qr code receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "домашнее задание вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашняя работа вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "самостоятельная работа вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решение домашнего задания",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решение контрольной работы",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "homework assignment",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "homework solution",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "worksheet problems",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem set solution",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "full transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subtitle transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "captions transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка разговора",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка диалога",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "полная расшифровка",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст субтитров",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры к ролику",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "dataset folder",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset files",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset metadata",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "training dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "testing dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка набора данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "файлы датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "папка датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "метаданные датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "mit license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache license version 2.0",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache 2.0 license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "bsd license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "bsd 2-clause license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "bsd 3-clause license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "gnu general public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "gnu lesser general public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "gnu affero general public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "mozilla public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "creative commons license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "open source license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "software license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "third party licenses",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "license file",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "license text",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "license terms",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "software license agreement",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "open source software license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "permission is hereby granted",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "copyright and permission notice",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "copyright notice and this permission notice",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistribution and use in source and binary forms",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistributions of source code",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistributions in binary form",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "source and binary forms",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "this software is provided",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "the software is provided as is",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "software is provided as is",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "without warranty of any kind",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "express or implied warranties",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "merchantability and fitness",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "fitness for a particular purpose",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "in no event shall the authors",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "in no event shall the copyright holder",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "contributors be liable",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "terms and conditions for use reproduction and distribution",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "terms and conditions for use, reproduction, and distribution",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache software foundation",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under the apache license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under the mit license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under the bsd license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under gpl",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "open source notices",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "copyright notices",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistribution conditions",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "source code license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия mit",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия apache",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия bsd",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия gpl",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия на программное обеспечение",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензионное соглашение",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "текст лицензии",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "условия лицензии",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензионные условия",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "файл лицензии",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "уведомление об авторских правах",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "авторские права и разрешение",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "отказ от ответственности",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "без каких-либо гарантий",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "программное обеспечение предоставляется как есть",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "распространение и использование",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "открытый исходный код",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "права на использование программного обеспечения",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "форма 2 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "форма 3 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 2ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 3ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая справка 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая справка о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговый период",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма фиксированных авансовых платежей",
+    "category": "Finance"
+  },
+  {
+    "text": "общая сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога удержанная",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога исчисленная",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога перечисленная",
+    "category": "Finance"
+  },
+  {
+    "text": "признак налогоплательщика",
+    "category": "Finance"
+  },
+  {
+    "text": "ИНН налогового агента",
+    "category": "Finance"
+  },
+  {
+    "text": "КПП налогового агента",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный признак документа",
+    "category": "Finance"
+  },
+  {
+    "text": "номер фискального документа",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice amount",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice date",
+    "category": "Finance"
+  },
+  {
+    "text": "tax invoice number",
+    "category": "Finance"
+  },
+  {
+    "text": "income statement tax",
+    "category": "Finance"
+  },
+  {
+    "text": "лабораторная работа № 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа n1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа n2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчет по лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчёт по лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по физике",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по ос",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по информатике",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по программированию",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная установка схема",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "цель лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "вывод лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work no 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work no 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory report no",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory assignment no",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "учебные материалы курса",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебные материалы дисциплины",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспекты лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "электронный курс лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теория к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теория к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "экзаменационный материал",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материал для подготовки к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course notes for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam theory notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "содержание художественной книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "страницы романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "текст художественного произведения",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book pages",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel pages",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction text",
+    "category": "Media/Books"
+  },
+  {
+    "text": "chapter from novel",
+    "category": "Media/Books"
+  },
+  {
+    "text": "00:00:02",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00:03",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "1\r\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "2\r\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1 (00:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2 (00:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "транскрипция аудио",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка голосового сообщения",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "паспортные данные",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "данные паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "копия паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "скан паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "фото паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "разворот паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспорт гражданина рф",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспорт рф",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "российский паспорт",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "серия паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "серия и номер паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "серия номер паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "кем выдан паспорт",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "дата выдачи паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "код подразделения",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспортная страница",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "удостоверение личности",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ удостоверяющий личность",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ, удостоверяющий личность",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ удостоверяющий личность гражданина",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ, удостоверяющий личность гражданина",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "снилс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер снилс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "страховой номер индивидуального лицевого счета",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "страховой номер индивидуального лицевого счёта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "полис омс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "полис дмс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер полиса омс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер полиса дмс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "медицинский полис омс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "медицинский полис дмс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "согласие на обработку персональных данных",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "согласие субъекта персональных данных",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "обработка персональных данных заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "адрес регистрации по паспорту",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "место регистрации по паспорту",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "регистрация по месту жительства",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "регистрация по месту пребывания",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "анкета заявителя персональные данные",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "личная анкета заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "персональная анкета заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "подпись заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "нотариальная доверенность",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "доверенность на представление интересов",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "акт приема-передачи документов",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "акт приёма-передачи документов",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспорт налогоплательщика",
+    "category": "Finance"
+  },
+  {
+    "text": "ИНН налогоплательщика",
+    "category": "Finance"
+  },
+  {
+    "text": "сведения о доходах физического лица",
+    "category": "Finance"
+  },
+  {
+    "text": "справка о доходах физического лица",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая декларация 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "расчет суммы налога",
+    "category": "Finance"
+  },
+  {
+    "text": "расчёт суммы налога",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальные данные чека",
+    "category": "Finance"
+  },
+  {
+    "text": "справка выдана студенту",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка выдана студентке",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждает что обучается",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждает, что обучается",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается по очной форме",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается по заочной форме",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "зачислен на обучение",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка для предоставления по месту требования",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "результаты лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "transcript speaker",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка спикер",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры таймкод",
+    "category": "Media/Transcript"
+  }
+]
