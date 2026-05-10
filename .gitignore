@@ -49,6 +49,9 @@ ENV/
 # Logs
 *.log
 
+# Data outputs
+/files/*.json
+
 # Editors/OS
 .vscode/
 .idea/
