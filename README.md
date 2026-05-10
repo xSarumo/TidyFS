@@ -27,8 +27,8 @@ The project is written in **Go** and **Python**:
 * Protection against dangerous directory cleanup: TidyFS refuses to clean `/`, the home directory, and conflicting source/target paths.
 
 ## Preview
-<p align="center">
-  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Header" width="65%">
+<p align="left">
+  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Header" width="40%">
 </p>
 
 ## How It Works
