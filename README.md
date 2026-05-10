@@ -2,6 +2,15 @@
   <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/header.png" alt="TidyFS Header" width="100%">
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black" alt="Linux">
+  <img src="https://img.shields.io/badge/FUSE-8A2BE2?style=flat" alt="FUSE">
+  <img src="https://img.shields.io/badge/TF--IDF-9B5DE5?style=flat" alt="TF-IDF">
+  <img src="https://img.shields.io/badge/Logistic_Regression-6C63FF?style=flat" alt="Logistic Regression">
+</p>
+
 ---
 
 **TidyFS** is a smart file organizer for Linux with a terminal user interface. It scans a folder with documents, classifies files by their content and filename, and then displays or organizes them into clear categories.
@@ -174,7 +183,7 @@ sudo zypper install git make go python3 python3-pip python3-virtualenv fuse3
 Clone the repository:
 
 ```bash
-git clone https://github.com/<username>/TidyFS.git
+git clone https://github.com/xSarumo/TidyFS.git
 cd TidyFS
 ```
 
