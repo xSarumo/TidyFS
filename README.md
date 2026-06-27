@@ -8,36 +8,47 @@
   <img src="https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black" alt="Linux">
   <img src="https://img.shields.io/badge/FUSE-8A2BE2?style=flat" alt="FUSE">
   <img src="https://img.shields.io/badge/TF--IDF-9B5DE5?style=flat" alt="TF-IDF">
+  <img src="https://img.shields.io/badge/LLM-Ollama-111827?style=flat" alt="Ollama LLM">
   <img src="https://img.shields.io/badge/Logistic_Regression-6C63FF?style=flat" alt="Logistic Regression">
 </p>
 
 ---
 
+# TidyFS
+
 **TidyFS** is a smart file organizer for Linux with a terminal user interface. It scans a folder with documents, classifies files by their content and filename, and then displays or organizes them into clear categories.
 
 The project is written in **Go** and **Python**:
 
-* Go is responsible for the TUI, file scanning, filesystem operations, and FUSE;
-* Python is responsible for text extraction and ML-based document classification.
+* **Go** is responsible for the TUI, file scanning, filesystem operations, and FUSE;
+* **Python** is responsible for text extraction and document classification;
+* classification can run in two modes:
+
+  * **TF-IDF fast** — local classic ML classifier;
+  * **LLM slow** — local Ollama-powered classifier.
 
 ## Features
 
 * Convenient TUI directly in the terminal.
 * Automatic document classification by category.
-* Supported modes:
+* Classifier mode selection:
+
+  * `TF_IDF` — faster, uses `classifier/models/classifier.joblib`;
+  * `LLM` — slower, uses a local Ollama model.
+* Supported action modes:
 
   * `fuse` — virtual filesystem without moving files;
   * `move` — moves files into a sorted structure;
   * `copy` — copies files into a sorted structure.
 * Supported document formats: `.pdf`, `.txt`, `.doc`, `.docx`, `.md`.
 * Text preview extraction from PDF and DOCX files.
-* Classification using an ML model based on TF-IDF features and Logistic Regression.
-* Additional filename-based rules for common document types: resumes, certificates, lab reports, notes, licenses, tickets, statements, etc.
+* Filename-based rules for common document types: resumes, certificates, lab reports, notes, licenses, tickets, statements, etc.
 * Protection against dangerous directory cleanup: TidyFS refuses to clean `/`, the home directory, and conflicting source/target paths.
 
 ## Preview
+
 <p align="left">
-  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Header" width="40%">
+  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Preview" width="40%">
 </p>
 
 ## How It Works
@@ -51,7 +62,7 @@ TidyFS follows a pipeline of several steps:
    For text files, a small fragment of the content is extracted. For PDF and DOCX files, a Python extractor is used.
 
 3. **Classification**  
-   Each file is classified by its filename and content. The project uses a trained model stored in `classifier/models/classifier.joblib`.
+   Each file is classified by its filename and content. TidyFS can use either the fast TF-IDF classifier or the slower local LLM classifier.
 
 4. **Organization**  
    Depending on the selected mode, TidyFS either mounts a virtual tree via FUSE or copies/moves files into the target directory.
@@ -94,15 +105,17 @@ After launching the TUI, specify:
 
 * **Source folder** — the folder to organize, for example `~/Downloads`;
 * **Target folder** — the folder for the result, for example `~/TidyFS`;
-* **Action mode** — the operation mode: `fuse`, `move`, or `copy`;
-* **Clean target before work** — whether to clean the target directory before copying/moving files.
+* **Action mode** — `fuse`, `move`, or `copy`;
+* **Clean target before work** — whether to clean the target directory before copying/moving files;
+* **Classifier** — `TF_IDF` or `LLM`.
 
 ### `fuse` Mode
 
 ```text
-Source: ~/Downloads
-Target: ~/TidyFS
-Mode:   fuse
+Source:     ~/Downloads
+Target:     ~/TidyFS
+Mode:       fuse
+Classifier: TF_IDF fast
 ```
 
 In this mode, TidyFS creates a virtual representation of the files. The original files stay in place, while an organized category structure appears in the target folder.
@@ -112,9 +125,10 @@ This is the safest mode for the first run.
 ### `copy` Mode
 
 ```text
-Source: ~/Downloads
-Target: ~/TidyFS
-Mode:   copy
+Source:     ~/Downloads
+Target:     ~/TidyFS
+Mode:       copy
+Classifier: LLM 
 ```
 
 TidyFS copies files from the source folder into the target folder, organizing them by category.
@@ -122,9 +136,10 @@ TidyFS copies files from the source folder into the target folder, organizing th
 ### `move` Mode
 
 ```text
-Source: ~/Downloads
-Target: ~/TidyFS
-Mode:   move
+Source:     ~/Downloads
+Target:     ~/TidyFS
+Mode:       move
+Classifier: TF_IDF fast
 ```
 
 TidyFS moves files from the source folder into the target folder. Use this mode only if you are sure the classification results are correct.
@@ -139,8 +154,9 @@ TidyFS moves files from the source folder into the target folder. Use this mode 
 * `make`
 * Python `venv`
 * FUSE for the virtual filesystem mode
+* Ollama, only if you want to use `LLM slow`
 
-Python dependencies:
+Python dependencies are installed from `requirements.txt`:
 
 ```text
 scikit-learn
@@ -148,7 +164,10 @@ pypdf
 python-docx
 joblib
 ollama
+pydantic
 ```
+
+> `pydantic` is required by the LLM classifier because it validates the JSON answer returned by the model.
 
 Go dependencies are installed through `go mod`.
 
@@ -158,25 +177,73 @@ Go dependencies are installed through `go mod`.
 
 ```bash
 sudo apt update
-sudo apt install -y git make golang python3 python3-venv python3-pip fuse3
+sudo apt install -y git make golang python3 python3-venv python3-pip fuse3 curl
 ```
 
 ### Fedora
 
 ```bash
-sudo dnf install -y git make golang python3 python3-pip python3-virtualenv fuse3
+sudo dnf install -y git make golang python3 python3-pip python3-virtualenv fuse3 curl
 ```
 
 ### Arch Linux / Manjaro
 
 ```bash
-sudo pacman -S --needed git make go python python-pip fuse3
+sudo pacman -S --needed git make go python python-pip fuse3 curl
 ```
 
 ### openSUSE
 
 ```bash
-sudo zypper install git make go python3 python3-pip python3-virtualenv fuse3
+sudo zypper install git make go python3 python3-pip python3-virtualenv fuse3 curl
+```
+
+## Installing Ollama for LLM Classification
+
+The `LLM slow` classifier uses a local Ollama server.
+
+Install Ollama on Linux:
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+Start the Ollama service:
+
+```bash
+sudo systemctl start ollama
+sudo systemctl status ollama
+```
+
+Pull the default model used by TidyFS:
+
+```bash
+ollama pull qwen3:1.7b
+```
+
+You can also use another small local model:
+
+```bash
+ollama pull gemma3:1b
+ollama pull qwen3:0.6b
+```
+
+Check installed models:
+
+```bash
+ollama list
+```
+
+Test the server:
+
+```bash
+ollama run qwen3:1.7b
+```
+
+or through the API:
+
+```bash
+curl http://localhost:11434/api/tags
 ```
 
 ## Building from Source
@@ -249,13 +316,15 @@ make clean-all    # remove bin, .venv, pycache, and generated JSON files
 ```text
 TidyFS/
 ├── carrier/              # moving, copying, and FUSE file representation
-├── classifier/           # Python classifier, model, and training data
+├── classifier/           # Python classifiers, model, and training data
 │   ├── models/
 │   │   └── classifier.joblib
-│   ├── classifier.py
+│   ├── classifier_tf_idf.py
+│   ├── classifier_llm.py
+│   ├── normalizer.py
 │   ├── train.ipynb
 │   └── training_data.json
-├── classifier_runner/    # running the Python classifier from Go
+├── classifier_runner/    # running the selected Python classifier from Go
 ├── exporter/             # saving intermediate JSON files
 ├── extractor/            # extracting text from PDF/DOCX files
 ├── files/                # intermediate files: files.json and classified_files.json
@@ -269,18 +338,170 @@ TidyFS/
 └── requirements.txt
 ```
 
-## ML Classification
+## Classification Modes
 
-The classifier is located in `classifier/classifier.py`.
+TidyFS supports two classifier modes.
+
+### TF-IDF Fast
+
+`TF_IDF fast` runs:
+
+```text
+classifier/classifier_tf_idf.py
+```
 
 It uses:
 
 * `TfidfVectorizer` for word-based features;
 * `TfidfVectorizer` for character n-grams;
 * `FeatureUnion` to combine features;
-* `LogisticRegression` for final classification.
+* `LogisticRegression` for final classification;
+* filename regex rules before ML prediction.
 
-Before making an ML prediction, TidyFS also checks the filename using a set of regular expressions. This helps the system recognize obvious documents more accurately, such as resumes, certificates, lab reports, notes, licenses, and financial files.
+This mode is fast and does not require Ollama.
+
+### LLM
+
+`LLM` runs:
+
+```text
+classifier/classifier_llm.py
+```
+
+It uses:
+
+* local Ollama model;
+* official `ollama` Python library;
+* Pydantic validation;
+* JSON Schema through `format=SCHEMA`;
+* retry logic if the model returns invalid JSON;
+* fallback category if all retries fail.
+
+The answer is validated against the allowed category list. If the model returns an invalid category or invalid JSON, TidyFS retries.
+
+## Changing the LLM Model
+
+By default, the LLM classifier uses:
+
+```python
+model="qwen3:1.7b"
+```
+
+To change the model manually, edit this file:
+
+```text
+classifier/classifier_llm.py
+```
+
+Find:
+
+```python
+response = chat(
+    model="qwen3:1.7b",
+    messages=messages,
+    options=options,
+    format=SCHEMA
+)
+```
+
+Replace it with another installed Ollama model, for example:
+
+```python
+response = chat(
+    model="gemma3:1b",
+    messages=messages,
+    options=options,
+    format=SCHEMA
+)
+```
+
+Then pull the model:
+
+```bash
+ollama pull gemma3:1b
+```
+
+### Recommended: Use an Environment Variable
+
+A more convenient approach is to make the model configurable through an environment variable.
+
+In `classifier/classifier_llm.py`, add:
+
+```python
+import os
+
+MODEL_NAME = os.getenv("TIDYFS_LLM_MODEL", "qwen3:1.7b")
+```
+
+Then change:
+
+```python
+model="qwen3:1.7b"
+```
+
+to:
+
+```python
+model=MODEL_NAME
+```
+
+Now you can run TidyFS with another model without editing code:
+
+```bash
+TIDYFS_LLM_MODEL=gemma3:1b make run
+```
+
+or, if installed globally:
+
+```bash
+TIDYFS_LLM_MODEL=gemma3:1b tidyfs
+```
+
+## Ollama Server Modes
+
+Ollama has two common usage modes.
+
+### Option 1: System Service
+
+This is the default Linux installation style.
+
+Start Ollama:
+
+```bash
+sudo systemctl start ollama
+```
+
+Enable it on boot:
+
+```bash
+sudo systemctl enable ollama
+```
+
+Stop it:
+
+```bash
+sudo systemctl stop ollama
+```
+
+View logs:
+
+```bash
+journalctl -e -u ollama
+```
+
+This option is simple and recommended if you often use LLM classification.
+
+### Option 2: Start Ollama Only During LLM Classification
+
+If you do not want Ollama to run all the time, TidyFS can start `ollama serve` only when `LLM slow` is selected, then stop it after classification.
+
+Recommended behavior:
+
+1. If Ollama is already running, TidyFS uses it and does not stop it.
+2. If Ollama is not running, TidyFS starts `ollama serve`.
+3. After LLM classification finishes, TidyFS stops only the server process it started itself.
+
+Add this logic in Go inside `classifier_runner/classifier_runner.go`, because this package already decides which Python classifier to run.
 
 ## Supported Categories
 
@@ -354,6 +575,62 @@ Remove all generated files:
 make clean-all
 ```
 
+## Troubleshooting
+
+### `ollama not found in PATH`
+
+Install Ollama:
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+Then check:
+
+```bash
+ollama --version
+```
+
+### `connection refused` or Ollama is not running
+
+Start Ollama manually:
+
+```bash
+sudo systemctl start ollama
+```
+
+or use the app-managed `ollama serve` approach described above.
+
+### Model not found
+
+Pull the model:
+
+```bash
+ollama pull qwen3:1.7b
+```
+
+or change `TIDYFS_LLM_MODEL` to a model that exists locally:
+
+```bash
+ollama list
+```
+
+### Python dependency error
+
+Reinstall Python dependencies:
+
+```bash
+make py-clean
+make py-deps
+```
+
+Make sure `requirements.txt` contains:
+
+```text
+pydantic
+ollama
+```
+
 ## License
 
-This project is distributed under the license specified in the [`LICENSE`](LICENSE) file.
+This project is distributed under the MIT License.
