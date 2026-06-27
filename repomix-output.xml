@@ -1,0 +1,7376 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+carrier/
+  classified_file.go
+  filesystem_carrier.go
+  fuse_carrier.go
+classifier/
+  models/
+    classifier.joblib
+  classifier_llm.py
+  classifier_tf_idf.py
+  normalizer.py
+  train.ipynb
+  training_data.json
+classifier_runner/
+  classifier_runner.go
+exporter/
+  json.go
+extractor/
+  extractor.py
+project_path/
+  project_path.go
+scanner/
+  scanner.go
+src/
+  main.go
+tui/
+  tui.go
+.gitignore
+go.mod
+install.sh
+LICENSE
+Makefile
+README.md
+requirements.txt
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="carrier/classified_file.go">
+package carrier
+
+import (
+	"fmt"
+	"strings"
+)
+
+type ClassifiedFile struct {
+	Category string `json:"category"`
+	Name     string `json:"name"`
+	Path     string `json:"path"`
+}
+
+func ExtractCategoryNames(category string) ([]string, error) {
+	if category == "" {
+		return nil, fmt.Errorf("Category is empty!")
+	}
+
+	return strings.Split(category, "/"), nil
+}
+</file>
+
+<file path="carrier/filesystem_carrier.go">
+package carrier
+
+import (
+	projectpath "TidyFS/project_path"
+	"TidyFS/scanner"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func FileSystemCarrierRun(source, target, command string) error {
+	if strings.TrimSpace(source) == "" || strings.TrimSpace(target) == "" || strings.TrimSpace(command) == "" {
+		return fmt.Errorf("source, target or command is empty")
+	}
+
+	switch command {
+	case "move":
+		return carry(moveFile, source, target)
+
+	case "copy":
+		return carry(copyFile, source, target)
+
+	default:
+		return fmt.Errorf("unknown filesystem command: %s", command)
+	}
+}
+
+func carry(operation func(string, string) error, source, target string) error {
+	source, err := scanner.ExpandPath(source)
+	if err != nil {
+		return err
+	}
+
+	target, err = scanner.ExpandPath(target)
+	if err != nil {
+		return err
+	}
+
+	data, err := os.ReadFile(projectpath.ClassifiedFilesJSON())
+	if err != nil {
+		return err
+	}
+
+	var classifiedFiles []*ClassifiedFile
+	if err := json.Unmarshal(data, &classifiedFiles); err != nil {
+		return err
+	}
+
+	for _, file := range classifiedFiles {
+		if file == nil {
+			return fmt.Errorf("file is nil")
+		}
+
+		if strings.TrimSpace(file.Path) == "" {
+			return fmt.Errorf("file path is empty")
+		}
+
+		if strings.TrimSpace(file.Category) == "" {
+			return fmt.Errorf("file category is empty: %s", file.Path)
+		}
+
+		if strings.TrimSpace(file.Name) == "" {
+			return fmt.Errorf("file name is empty: %s", file.Path)
+		}
+
+		sourcePath := file.Path
+		if !filepath.IsAbs(sourcePath) {
+			sourcePath = filepath.Join(source, sourcePath)
+		}
+
+		targetPath := filepath.Join(target, file.Category, file.Name)
+
+		targetPath, err = uniqueTargetPath(targetPath)
+		if err != nil {
+			return err
+		}
+
+		if err := operation(sourcePath, targetPath); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func moveFile(sourcePath string, targetPath string) error {
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+		return err
+	}
+
+	err := os.Rename(sourcePath, targetPath)
+	if err == nil {
+		return nil
+	}
+
+	if !isCrossDeviceError(err) {
+		return err
+	}
+
+	if err := copyFile(sourcePath, targetPath); err != nil {
+		return err
+	}
+
+	return os.Remove(sourcePath)
+}
+
+func copyFile(sourcePath string, targetPath string) error {
+	src, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	info, err := src.Stat()
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		return fmt.Errorf("source is a directory, expected file: %s", sourcePath)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+		return err
+	}
+
+	dst, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, info.Mode())
+	if err != nil {
+		return err
+	}
+
+	copied := false
+	defer func() {
+		_ = dst.Close()
+
+		if !copied {
+			_ = os.Remove(targetPath)
+		}
+	}()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return err
+	}
+
+	if err := dst.Sync(); err != nil {
+		return err
+	}
+
+	if err := os.Chtimes(targetPath, info.ModTime(), info.ModTime()); err != nil {
+		return err
+	}
+
+	copied = true
+	return nil
+}
+
+func uniqueTargetPath(targetPath string) (string, error) {
+	if _, err := os.Stat(targetPath); err != nil {
+		if os.IsNotExist(err) {
+			return targetPath, nil
+		}
+
+		return "", err
+	}
+
+	dir := filepath.Dir(targetPath)
+	ext := filepath.Ext(targetPath)
+	name := strings.TrimSuffix(filepath.Base(targetPath), ext)
+
+	for i := 1; ; i++ {
+		candidate := filepath.Join(dir, fmt.Sprintf("%s (%d)%s", name, i, ext))
+
+		if _, err := os.Stat(candidate); err != nil {
+			if os.IsNotExist(err) {
+				return candidate, nil
+			}
+
+			return "", err
+		}
+	}
+}
+
+func isCrossDeviceError(err error) bool {
+	return errors.Is(err, os.ErrInvalid) ||
+		strings.Contains(strings.ToLower(err.Error()), "cross-device")
+}
+</file>
+
+<file path="carrier/fuse_carrier.go">
+package carrier
+
+import (
+	projectpath "TidyFS/project_path"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"syscall"
+
+	"github.com/hanwen/go-fuse/v2/fs"
+	"github.com/hanwen/go-fuse/v2/fuse"
+)
+
+type TidyFSNode struct {
+	ID       uint64
+	Name     string
+	Path     string
+	IsDir    bool
+	children []*TidyFSNode
+}
+
+type TidyFileHandle struct {
+	file *os.File
+}
+
+type FuseNode struct {
+	fs.Inode
+	node *TidyFSNode
+}
+
+func (n *FuseNode) Readdir(ctx context.Context) (fs.DirStream, syscall.Errno) {
+	if !n.node.IsDir {
+		return nil, syscall.ENOTDIR
+	}
+
+	entries := make([]fuse.DirEntry, 0, len(n.node.children))
+
+	for _, child := range n.node.children {
+		mode := uint32(fuse.S_IFREG)
+
+		if child.IsDir {
+			mode = fuse.S_IFDIR
+		}
+		entries = append(entries, fuse.DirEntry{Name: child.Name, Mode: mode})
+	}
+
+	return fs.NewListDirStream(entries), 0
+}
+
+func (n *FuseNode) Getattr(
+	ctx context.Context,
+	fh fs.FileHandle,
+	out *fuse.AttrOut,
+) syscall.Errno {
+	if n.node.IsDir {
+		out.Mode = fuse.S_IFDIR | 0755
+		out.Size = 0
+		return 0
+	}
+
+	out.Mode = fuse.S_IFREG | 0644
+
+	if n.node.Path != "" {
+		if st, err := os.Stat(n.node.Path); err == nil {
+			out.Size = uint64(st.Size())
+		}
+	}
+
+	return 0
+}
+
+func (n *FuseNode) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
+	if !n.node.IsDir {
+		return nil, syscall.ENOTDIR
+	}
+
+	for _, child := range n.node.children {
+		if child.Name != name {
+			continue
+		}
+
+		mode := uint32(fuse.S_IFREG | 0644)
+		if child.IsDir {
+			mode = fuse.S_IFDIR | 0755
+		}
+
+		var size uint64
+		if !child.IsDir && child.Path != "" {
+			if st, err := os.Stat(child.Path); err == nil {
+				size = uint64(st.Size())
+			}
+		}
+
+		out.Attr.Mode = mode
+		out.Attr.Size = size
+
+		stableMode := uint32(fuse.S_IFREG)
+		if child.IsDir {
+			stableMode = fuse.S_IFDIR
+		}
+
+		childNode := &FuseNode{
+			node: child,
+		}
+
+		inode := n.NewInode(ctx, childNode, fs.StableAttr{
+			Mode: stableMode,
+			Ino:  child.ID,
+		})
+
+		return inode, 0
+	}
+
+	return nil, syscall.ENOENT
+}
+
+func (h *TidyFileHandle) Release(ctx context.Context) syscall.Errno {
+	if err := h.file.Close(); err != nil {
+		return errnoFromErr(err)
+	}
+
+	return 0
+}
+
+func (h *TidyFileHandle) Write(
+	ctx context.Context,
+	data []byte,
+	off int64,
+) (uint32, syscall.Errno) {
+	n, err := h.file.WriteAt(data, off)
+	if err != nil {
+		return uint32(n), errnoFromErr(err)
+	}
+
+	return uint32(n), 0
+}
+
+func (n *FuseNode) Open(
+	ctx context.Context,
+	flags uint32,
+) (fs.FileHandle, uint32, syscall.Errno) {
+	if n.node.IsDir {
+		return nil, 0, syscall.EISDIR
+	}
+
+	if n.node.Path == "" {
+		return nil, 0, syscall.ENOENT
+	}
+
+	var openFlags int
+
+	switch flags & syscall.O_ACCMODE {
+	case syscall.O_RDONLY:
+		openFlags = os.O_RDONLY
+	case syscall.O_WRONLY:
+		openFlags = os.O_WRONLY
+	case syscall.O_RDWR:
+		openFlags = os.O_RDWR
+	default:
+		openFlags = os.O_RDONLY
+	}
+
+	if flags&syscall.O_APPEND != 0 {
+		openFlags |= os.O_APPEND
+	}
+	if flags&syscall.O_TRUNC != 0 {
+		openFlags |= os.O_TRUNC
+	}
+
+	file, err := os.OpenFile(n.node.Path, openFlags, 0644)
+	if err != nil {
+		return nil, 0, errnoFromErr(err)
+	}
+
+	return &TidyFileHandle{file: file}, 0, 0
+}
+
+func (h *TidyFileHandle) Read(
+	ctx context.Context,
+	dest []byte,
+	off int64,
+) (fuse.ReadResult, syscall.Errno) {
+	buf := make([]byte, len(dest))
+
+	n, err := h.file.ReadAt(buf, off)
+	if err != nil && err != io.EOF {
+		return nil, errnoFromErr(err)
+	}
+
+	return fuse.ReadResultData(buf[:n]), 0
+}
+
+func FuseRun(ctx context.Context, mountPoint string) error {
+	if mountPoint == "" {
+		return fmt.Errorf("Mount dir is empty")
+	}
+
+	filesys, err := buildFS()
+
+	if err != nil {
+		return err
+	}
+
+	server, err := fs.Mount(mountPoint,
+		&FuseNode{
+			node: filesys,
+		},
+		&fs.Options{
+			MountOptions: fuse.MountOptions{
+				Debug: false,
+			},
+		})
+
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		<-ctx.Done()
+		_ = server.Unmount()
+	}()
+
+	go func() {
+		server.Wait()
+	}()
+	return nil
+}
+
+func buildFS() (*TidyFSNode, error) {
+	ids := &inodeGenerator{}
+
+	root := &TidyFSNode{
+		ID:       ids.Next(),
+		Name:     "",
+		IsDir:    true,
+		children: make([]*TidyFSNode, 0, 10),
+	}
+
+	data, err := os.ReadFile(projectpath.ClassifiedFilesJSON())
+	if err != nil {
+		return nil, err
+	}
+
+	var classifiedFiles []ClassifiedFile
+	if err := json.Unmarshal(data, &classifiedFiles); err != nil {
+		return nil, err
+	}
+
+	for _, file := range classifiedFiles {
+		if file.Category == "" {
+			return nil, fmt.Errorf("empty category")
+		}
+
+		names, err := ExtractCategoryNames(file.Category)
+		if err != nil {
+			return nil, err
+		}
+
+		current := root
+
+		for _, categoryName := range names {
+			if categoryName == "" {
+				continue
+			}
+
+			current = findOrCreateDirWithID(current, categoryName, ids)
+		}
+
+		current.children = append(current.children, &TidyFSNode{
+			ID:    ids.Next(),
+			Name:  file.Name,
+			Path:  file.Path,
+			IsDir: false,
+		})
+	}
+
+	return root, nil
+}
+
+func findOrCreateDirWithID(parent *TidyFSNode, name string, ids *inodeGenerator) *TidyFSNode {
+	for _, child := range parent.children {
+		if child.IsDir && child.Name == name {
+			return child
+		}
+	}
+
+	child := &TidyFSNode{
+		ID:       ids.Next(),
+		Name:     name,
+		IsDir:    true,
+		children: make([]*TidyFSNode, 0),
+	}
+
+	parent.children = append(parent.children, child)
+	return child
+}
+
+func errnoFromErr(err error) syscall.Errno {
+	if err == nil {
+		return 0
+	}
+
+	if errno, ok := err.(syscall.Errno); ok {
+		return errno
+	}
+
+	if os.IsNotExist(err) {
+		return syscall.ENOENT
+	}
+	if os.IsPermission(err) {
+		return syscall.EACCES
+	}
+
+	return syscall.EIO
+}
+
+type inodeGenerator struct {
+	next uint64
+}
+
+func (g *inodeGenerator) Next() uint64 {
+	g.next++
+	return g.next
+}
+</file>
+
+<file path="classifier/classifier_llm.py">
+import sys
+import json
+import normalizer
+from ollama import chat
+from pathlib import Path
+from typing import Literal
+from pydantic import BaseModel, ValidationError
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+
+FILES_PATH = PROJECT_ROOT / "files" / "files.json"
+OUTPUT_PATH = PROJECT_ROOT / "files" / "classified_files.json"
+
+RETRIES = 4
+
+class Answer(BaseModel):
+    answer: Literal["Education/Assignments", 
+                    "Documents/Personal",  
+                    "Education/Materials",
+                    "Career/Internship",
+                    "Career/Resume", 
+                    "Education/Project", 
+                    "Finance", 
+                    "IT/Licenses", 
+                    "Media/Transcript"
+                    ]
+    
+SCHEMA = Answer.model_json_schema()
+
+def classify_file(file: dict):
+    name = normalizer.normalize_text(file.get("name", ""))
+    file_text = normalizer.normalize_text(file.get("text", ""))
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a file classifier. "
+                "Classify the file by its meaning using ONLY the file name and text. "
+                "Return JSON only. No markdown. No explanation. "
+                "The JSON must match exactly this shape: "
+                '{"answer": "<one allowed category>"} '
+                "\n\n"
+                "Allowed categories and meanings:\n"
+                "\n"
+                "1. Education/Assignments\n"
+                "Use for homework, exercises, tasks, lab work, quizzes, tests, submissions, "
+                "course assignments, grading rubrics, and files that look like student work to complete.\n"
+                "\n"
+                "2. Documents/Personal\n"
+                "Use for personal documents, identity documents, letters, applications, certificates, "
+                "personal notes, forms, scans, and files about a person's private life or administration.\n"
+                "\n"
+                "3. Education/Materials\n"
+                "Use for study materials, lecture notes, slides, textbooks, articles, tutorials, "
+                "course references, learning resources, and educational explanations not meant as a task to submit.\n"
+                "\n"
+                "4. Career/Internship\n"
+                "Use for internships, job applications, vacancies, job descriptions, company programs, "
+                "interview preparation, recruitment, cover letters, and internship-related documents.\n"
+                "\n"
+                "5. Career/Resume\n"
+                "Use for resumes, CVs, portfolios, professional profiles, biographies, skill summaries, "
+                "and files describing a person's work experience or qualifications.\n"
+                "\n"
+                "6. Education/Project\n"
+                "Use for school or university projects, research projects, project reports, project plans, "
+                "presentations, source materials for a project, and teamwork/project deliverables.\n"
+                "\n"
+                "7. Finance\n"
+                "Use for invoices, receipts, payments, bank documents, taxes, budgets, salaries, prices, "
+                "financial statements, purchases, subscriptions, and money-related files.\n"
+                "\n"
+                "8. IT/Licenses\n"
+                "Use for software licenses, activation keys, certificates, API keys, tokens, credentials, "
+                "software subscriptions, technical access documents, and license agreements.\n"
+                "\n"
+                "9. Media/Transcript\n"
+                "Use for transcripts, subtitles, captions, interview transcripts, meeting transcripts, "
+                "video/audio text dumps, speech-to-text output, and dialogue scripts.\n"
+                "\n\n"
+                "Decision rules:\n"
+                "- If the file is an assignment to complete or submit, choose Education/Assignments.\n"
+                "- If the file teaches or explains something, choose Education/Materials.\n"
+                "- If the file is about a project deliverable, choose Education/Project.\n"
+                "- If the file is mainly a CV/resume, choose Career/Resume.\n"
+                "- If the file is about applying to a job or internship, choose Career/Internship.\n"
+                "- If the file is about money, choose Finance.\n"
+                "- If the file contains software license or access information, choose IT/Licenses.\n"
+                "- If the file is mostly spoken text converted to written text, choose Media/Transcript.\n"
+                "- If none of the above fits clearly, choose Documents/Personal.\n"
+                "\n\n"
+                "Allowed JSON answers:\n"
+                '{"answer": "Education/Assignments"}\n'
+                '{"answer": "Documents/Personal"}\n'
+                '{"answer": "Education/Materials"}\n'
+                '{"answer": "Career/Internship"}\n'
+                '{"answer": "Career/Resume"}\n'
+                '{"answer": "Education/Project"}\n'
+                '{"answer": "Finance"}\n'
+                '{"answer": "IT/Licenses"}\n'
+                '{"answer": "Media/Transcript"}'
+            )
+        },
+        {
+            "role": "user",
+            "content": f"{name}\n{file_text}"
+        }
+    ]
+
+    options = {
+        "temperature": 0,
+        "num_predict": 20
+    }
+
+    for _ in range(0, RETRIES-1):
+        response = chat(
+            model="qwen3:1.7b",
+            messages=messages,
+            options=options,
+            format=SCHEMA
+        )
+
+        content = response.message.content
+
+        try: 
+            parsed = Answer.model_validate_json(content)
+            return {
+                "name": name,
+                "path": file["path"],
+                "category":parsed.answer
+                }
+        
+        except ValidationError:
+            messages.append({
+                "role": "user",
+                "content": (
+                    "Your previous response was invalid. "
+                    "Return EXACTLY valid JSON matching this schema: "
+                    f"{SCHEMA}"
+                ),
+            })
+
+    return {
+                "name": name,
+                "path": file["path"],
+                "category": "Education/Assignments"
+            }
+
+
+
+def main():
+    with open(FILES_PATH, "r", encoding="utf-8") as f:
+        files = json.load(f)
+
+    classified = [classify_file(file) for file in files]
+
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(classified, f, ensure_ascii=False, indent=2)
+
+    print(f"Готово. Сохранено в: {OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="classifier/classifier_tf_idf.py">
+import json
+import re
+import sys
+import joblib
+from pathlib import Path
+from extractor.extractor import extract_preview
+
+import normalizer
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+
+FILES_PATH = PROJECT_ROOT / "files" / "files.json"
+OUTPUT_PATH = PROJECT_ROOT / "files" / "classified_files.json"
+MODEL_PATH = PROJECT_ROOT / "classifier" / "models" / "classifier.joblib"
+
+CONFIDENCE_THRESHOLD = 0.0
+
+CATEGORY_MERGE_MAP = {
+    "Education/Homework": "Education/Assignments",
+    "Education/Labworks": "Education/Assignments",
+
+    "Education/Certificates": "Documents/Personal",
+    "Personal/Documents": "Documents/Personal",
+
+    "Media/Books": "Education/Materials",
+    "Education/Materials": "Education/Materials",
+    "Data/Datasets": "Education/Materials",
+
+    "Career/Internship": "Career/Internship",
+
+    "Career/Resume": "Career/Resume",
+
+    "Education/Project": "Education/Project",
+
+    "Finance": "Finance",
+
+    "IT/Licenses": "IT/Licenses",
+
+    "Media/Transcript": "Media/Transcript",
+}
+
+
+def merge_category(category: str) -> str:
+    return CATEGORY_MERGE_MAP.get(category, category)
+
+FILENAME_OVERRIDES = [
+    # -------------------------
+    # CAREER
+    # -------------------------
+    (r"(резюме|resume|résumé|cv|curriculum\s+vitae)", "Career/Resume"),
+
+    (r"(стажировк|стаж[её]р|internship|отбор.*стаж|стаж.*отбор)", "Career/Internship"),
+    (r"(отбор\s+на\s+стажировк|тз.*стажировк|тестовое.*стажировк)", "Career/Internship"),
+
+    # -------------------------
+    # FINANCE
+    # -------------------------
+    (r"(2\s*ндфл|2ндфл|2[\s_-]*ndfl|3\s*ндфл|3ндфл|3[\s_-]*ndfl)", "Finance"),
+    (r"(справк.*доход|налогов.*декларац|налогов.*вычет|кассов.*чек|товарн.*чек)", "Finance"),
+    (r"(квитанц.*оплат|сч[её]т.*оплат|плат[её]жн.*поруч|банковск.*выписк)", "Finance"),
+    (r"(rzd_ticket|авиабилет|билет|посадочн.*талон)", "Finance"),
+
+    # -------------------------
+    # EDUCATION
+    # -------------------------
+    (r"(справк.*места.*уч[её]б|справк.*обучен|student.*certificate|certificate.*enroll)", "Education/Certificates"),
+
+    (r"(домашн|дз\s*№|дз_|дз-|homework|home\s*assignment)", "Education/Homework"),
+    (r"(контрольн.*работ|самостоятельн.*работ|проверочн.*работ)", "Education/Homework"),
+
+    (r"(лабораторн|лаба|лаб[аы]?\s*\d|lab[\s_-]?\d|os[\s_-]?lab|lab[\s_-]?os|physlab)", "Education/Labworks"),
+    (r"(отч[её]т.*лаб|лаб.*отч[её]т|физика\s+лаба|лаба\s+физика)", "Education/Labworks"),
+
+    (r"(индивидуальн.*проект|проектн.*работ|курсов.*проект|project\s+report|project\s+presentation)", "Education/Project"),
+
+    (r"(вопросы.*экз|вопросы.*зач[её]т|экзаменационн.*вопрос|экзаменационн.*билет)", "Education/Materials"),
+    (r"(конспект|лекц|lecture|lec\d|теорвер|теория|курс\s+лекц|студентам)", "Education/Materials"),
+    (r"(учебн.*пособ|методическ.*указ|методическ.*пособ|teacher'?s\s+guide|workbook)", "Education/Materials"),
+
+    # -------------------------
+    # IT / LICENSES
+    # -------------------------
+    (r"(^|[/\\])(ofl|license|licence|copying)(\.[a-z0-9]+)?$", "IT/Licenses"),
+    (r"(mit\s+license|apache\s+license|bsd\s+license|gpl|lgpl|open\s+font\s+license)", "IT/Licenses"),
+    (r"(copyright|permission\s+is\s+hereby\s+granted|redistribution\s+and\s+use)", "IT/Licenses"),
+
+    # -------------------------
+    # MEDIA
+    # -------------------------
+    (r"(transcript|subtitles|subtitle|субтитр|расшифровк|voice|голосов)", "Media/Transcript"),
+    (r"(youtube|youtu\.be|watch\?v=)", "Media/Transcript"),
+
+    (r"(книга|роман|сборник|том\s*\d|isbn|book|novel)", "Media/Books"),
+    (r"(история|культура|барокко|романтизм|реализм|модернизм|петергоф|русь)", "Media/Books"),
+]
+
+
+def classify_by_filename(file: dict) -> str | None:
+    name = normalizer.normalize_filename(file.get("name", ""))
+    path = normalizer.normalize_filename(file.get("path", ""))
+
+    filename_text = name
+
+    for pattern, category in FILENAME_OVERRIDES:
+        if re.search(pattern, filename_text, flags=re.IGNORECASE):
+            return category
+
+    return None
+
+
+def load_model():
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(f"Модель не найдена: {MODEL_PATH}")
+
+    return joblib.load(MODEL_PATH)
+
+
+def predict_category(text: str, model):
+    text = normalizer.normalize_text(text)
+
+    prediction = model.predict([text])[0]
+
+    confidence = 0.0
+    if hasattr(model, "predict_proba"):
+        probabilities = model.predict_proba([text])[0]
+        confidence = float(max(probabilities))
+
+    return {
+        "category": prediction,
+        "confidence": confidence,
+    }
+
+
+def classify_file(file: dict, model):
+    filename_category = classify_by_filename(file)
+
+    if filename_category:
+        return {
+            "path": file["path"],
+            "name": file["name"],
+            "category": merge_category(filename_category),
+        }
+
+    name = normalizer.normalize_text(file.get("name", ""))
+    file_text = normalizer.normalize_text(file.get("text", ""))
+
+    if not file_text:
+        path = file.get("path", "")
+        ext = file.get("ext", "")
+        file_text = normalizer.normalize_text(extract_preview(path, ext) or "")
+
+    combined_text = f"{name}\n{file_text}".strip()
+
+    if not combined_text:
+        combined_text = "document"
+
+    result = predict_category(combined_text, model)
+
+    return {
+        "path": file["path"],
+        "name": file["name"],
+        "category": merge_category(result["category"]),
+    }
+
+
+def main():
+    model = load_model()
+
+    with open(FILES_PATH, "r", encoding="utf-8") as f:
+        files = json.load(f)
+
+    classified = [classify_file(file, model) for file in files]
+
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(classified, f, ensure_ascii=False, indent=2)
+
+    print(f"Готово. Сохранено в: {OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="classifier/normalizer.py">
+def normalize_text(text: str) -> str:
+    return (
+        str(text or "")
+        .lower()
+        .replace("_", " ")
+        .replace("-", " ")
+        .replace(".", " ")
+        .strip()
+    )
+
+
+def normalize_filename(text: str) -> str:
+    return (
+        str(text or "")
+        .lower()
+        .strip()
+    )
+</file>
+
+<file path="classifier/training_data.json">
+[
+  {
+    "text": "датасет",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "датасеты",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "набор данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "наборы данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "datasets",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "training set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation set",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "valid dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тренировочная выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "обучающая выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тестовая выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "валидационная выборка",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "аннотация данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "размеченные данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "метки классов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "классы объектов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "labeled data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "labelled data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "ground truth",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "target variable",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "feature matrix",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "class label",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "classification dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "regression dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "csv dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "parquet",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataframe",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data frame",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "таблица данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "исходные данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "предобработка данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data preprocessing",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data cleaning",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "метаданные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "corpus",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "корпус текстов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "text corpus",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "sample dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset description",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data annotation",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data labeling",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "справка с места учебы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка с места учёбы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "студенческая справка",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка об обучении",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "академическая справка",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка обучающегося",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "является студентом",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "является студенткой",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается в университете",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается в институте",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается по программе",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "студент группы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "студентка группы",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "период обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "очная форма обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "заочная форма обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "очно-заочная форма обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "дата зачисления",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "приказ о зачислении",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "зачислен приказом",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "направление подготовки",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "номер студенческого",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждает обучение",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждение обучения",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "student certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "study certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "student status certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "certificate of enrollment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "certificate of enrolment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "enrollment certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "enrolment certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "academic certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "proof of enrollment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "proof of enrolment",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "university certificate",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "домашнее задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашняя работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "дз",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашка",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание на дом",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "самостоятельная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "самостоятельное задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "контрольная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "проверочная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "классная работа",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "учебное задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "вариант задания",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "номер задания",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решение задач",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решить задачи",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задачи для решения",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "упражнение",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "упражнения",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "ответы к заданиям",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание 1",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание 2",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание 3",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "homework",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "home assignment",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "take-home",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "worksheet",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem set",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problemset",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "classwork",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "self study",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "independent work",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "test work",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "variant task",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "solve the problems",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem 1",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem 2",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem 3",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "exercise 1",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "exercise 2",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "exercise 3",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "tasks for practice",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "practice problems",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашнее упражнение",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашние упражнения",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "лабораторная работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторные работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный отчет",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный отчёт",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчет по лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчёт по лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "цель лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "ход лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "вывод по лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная установка",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "экспериментальная установка",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "схема лабораторной установки",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный практикум",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "физический практикум",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторное задание",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторное занятие",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "журнал лабораторных работ",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "протокол лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "обработка результатов лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "результаты измерений в лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "погрешность измерений",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "расчет погрешности",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "расчёт погрешности",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "абсолютная погрешность",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "относительная погрешность",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "контрольные вопросы к лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory assignment",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory exercise",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory practical",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory setup",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "experimental setup",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab setup",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "measurement error",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "error calculation",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "uncertainty calculation",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "control questions",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "results processing",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab6",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab7",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab8",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab9",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab10",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_6",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab-6",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "os_lab",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab_os",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "physlab",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "physics lab",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная_работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лаба 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная №",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work no",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "индивидуальный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "индивидуальныи проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "индивидуальный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "проектная работа",
+    "category": "Education/Project"
+  },
+  {
+    "text": "учебный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "исследовательский проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "курсовой проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "командный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "групповой проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "тема проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "цель проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "актуальность проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "паспорт проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "защита проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "презентация проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "план проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "этапы проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "результаты проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "проектная деятельность",
+    "category": "Education/Project"
+  },
+  {
+    "text": "individual project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "student project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "course project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "research project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "team project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "group project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project work",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project proposal",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project report",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project presentation",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project plan",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project stages",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project results",
+    "category": "Education/Project"
+  },
+  {
+    "text": "capstone project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "проект по теме",
+    "category": "Education/Project"
+  },
+  {
+    "text": "project on",
+    "category": "Education/Project"
+  },
+  {
+    "text": "final project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "semester project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "transcript:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "video transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "audio transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "youtube transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка аудио",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка записи",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "транскрипт видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "транскрибация",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "таймкод",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "таймкоды",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "timestamps",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "timecode",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:01",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "-->",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "(00:00)",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "говорящий 1",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "говорящий 2",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "спикер 1",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "спикер 2",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "voice recording",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "audio recording",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "запись голоса",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "голосовое сообщение",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "youtu.be",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "watch?v=",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "подписывайтесь",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "ссылка в описании",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "в этом видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "in this video",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subscribe",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "link in description",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "synced and corrected",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "synced by",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subtitles by",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "addic7ed",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "opensubtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка интервью",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "transcribed by",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "auto-generated transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "captions",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "closed captions",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "caption file",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "voice transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "audio transcription",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "video transcription",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "художественная литература",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературное произведение",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературный текст",
+    "category": "Media/Books"
+  },
+  {
+    "text": "художественный текст",
+    "category": "Media/Books"
+  },
+  {
+    "text": "текст романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "фрагмент книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "отрывок из книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "страницы книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "главы книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "содержание книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "автор книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "сборник рассказов",
+    "category": "Media/Books"
+  },
+  {
+    "text": "электронная книга",
+    "category": "Media/Books"
+  },
+  {
+    "text": "печатное издание",
+    "category": "Media/Books"
+  },
+  {
+    "text": "книжное издание",
+    "category": "Media/Books"
+  },
+  {
+    "text": "роман в главах",
+    "category": "Media/Books"
+  },
+  {
+    "text": "пролог",
+    "category": "Media/Books"
+  },
+  {
+    "text": "эпилог",
+    "category": "Media/Books"
+  },
+  {
+    "text": "предисловие",
+    "category": "Media/Books"
+  },
+  {
+    "text": "послесловие",
+    "category": "Media/Books"
+  },
+  {
+    "text": "isbn",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "books.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "книга.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "роман.pdf",
+    "category": "Media/Books"
+  },
+  {
+    "text": "ebook",
+    "category": "Media/Books"
+  },
+  {
+    "text": "e-book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "literary work",
+    "category": "Media/Books"
+  },
+  {
+    "text": "literary text",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book excerpt",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel text",
+    "category": "Media/Books"
+  },
+  {
+    "text": "story collection",
+    "category": "Media/Books"
+  },
+  {
+    "text": "printed book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book chapter",
+    "category": "Media/Books"
+  },
+  {
+    "text": "chapter of the book",
+    "category": "Media/Books"
+  },
+  {
+    "text": "author's note",
+    "category": "Media/Books"
+  },
+  {
+    "text": "copyright page",
+    "category": "Media/Books"
+  },
+  {
+    "text": "preface",
+    "category": "Media/Books"
+  },
+  {
+    "text": "afterword",
+    "category": "Media/Books"
+  },
+  {
+    "text": "prologue",
+    "category": "Media/Books"
+  },
+  {
+    "text": "epilogue",
+    "category": "Media/Books"
+  },
+  {
+    "text": "00:00)",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00 -",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00 —",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "моё резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "мое резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "резюме кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "анкета кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "résumé",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "curriculum vitae",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate cv",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate profile",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "сопроводительное письмо",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "мотивационное письмо",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cover letter",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "motivation letter",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "опыт работы",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "профессиональный опыт",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "предыдущий опыт работы",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "релевантный опыт",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "work experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "employment history",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "previous employment",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "relevant experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "ключевые навыки",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "профессиональные навыки",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "технические навыки",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "навыки и компетенции",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "key skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "technical skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "core competencies",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "образование в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "достижения в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "профессиональные достижения",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "career achievements",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional achievements",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "обо мне в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "о себе в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "personal summary",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "professional summary",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "summary of qualifications",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "career objective",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "desired position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "желаемая должность",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "position applied",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "applying for the position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готов к релокации",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готова к релокации",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "available for relocation",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готов к удаленной работе",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "готов к удалённой работе",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "available for remote work",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "hh.ru/resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "headhunter resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "linkedin profile",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "github profile",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "portfolio link",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "ссылка на портфолио",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "dataset.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset.json",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "train.parquet",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test.parquet",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "описание датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "структура датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset structure",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset schema",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data schema",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "label mapping",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "обучающий набор данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тестовый набор данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "название книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "глава книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "первая глава",
+    "category": "Media/Books"
+  },
+  {
+    "text": "вторая глава",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературный отрывок",
+    "category": "Media/Books"
+  },
+  {
+    "text": "отрывок романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel chapter",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book title",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book author",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book content",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction novel",
+    "category": "Media/Books"
+  },
+  {
+    "text": "transcript text",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speech transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка речи",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифрованный текст",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст расшифровки",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subtitle file",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "srt subtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "vtt subtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажёр",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажер",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажёры",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажеры",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "интернатура",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "программа стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажерская программа",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажёрская программа",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "летняя стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "зимняя стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "оплачиваемая стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "неоплачиваемая стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка в компании",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка для студентов",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка для выпускников",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка разработчика",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка аналитика",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "офер на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internships",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "summer internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "winter internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "paid internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "unpaid internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship program",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "intern program",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "graduate internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "student internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "software engineering internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "data analyst internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "intern offer",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "отбор на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "этап отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "следующий этап отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "приглашаем на следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "пригласить на следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "прошел в следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "прошёл в следующий этап стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship selection",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship selection stage",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "next internship stage",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "next stage of internship selection",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "тестовое задание на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "тестовое задание для стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "тестовое задание и видеоинтервью",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "видеоинтервью на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "видео интервью на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "собеседование на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "интервью на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн решения для стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "дедлайн записи видеоинтервью",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "coding task for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "test task for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "technical assignment for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "video interview for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship video interview",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "interview for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship deadline",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "application deadline for internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship application",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship application process",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship recruitment",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internship recruiting",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "campus internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "campus recruitment internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "young professionals internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "graduate program internship",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internships@",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "internships@avito",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "авито стажировка",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "стажировка авито",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "github classroom для стажировки",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "приватный репозиторий github classroom",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "полезные материалы для отбора на стажировку",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "команда стажировок",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "команда internships",
+    "category": "Career/Internship"
+  },
+  {
+    "text": "резюме разработчика",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "резюме аналитика",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "резюме студента",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "student resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "developer resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "analyst resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv developer",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv analyst",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "опыт стажировки в резюме",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "internship experience on resume",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "тестовое задание по курсу",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "учебное тестовое задание",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "задание для самостоятельной работы",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "вариант самостоятельной работы",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "контрольная работа вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "лабораторная работа 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лр5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab report 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab report 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory work 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "индивидуальный учебный проект",
+    "category": "Education/Project"
+  },
+  {
+    "text": "защита индивидуального проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "тема индивидуального проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "паспорт индивидуального проекта",
+    "category": "Education/Project"
+  },
+  {
+    "text": "individual student project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "student research project",
+    "category": "Education/Project"
+  },
+  {
+    "text": "00:00 speaker",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:01 speaker",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "voice transcript text",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст расшифровки видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст расшифровки аудио",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "автоматические субтитры",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "файл субтитров",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "isbn:",
+    "category": "Media/Books"
+  },
+  {
+    "text": "isbn 978",
+    "category": "Media/Books"
+  },
+  {
+    "text": "оглавление книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "содержание романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "электронная версия книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book isbn",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel excerpt",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction excerpt",
+    "category": "Media/Books"
+  },
+  {
+    "text": "data/train",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "data/test",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset split",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset statistics",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "label distribution",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "class distribution",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разделение датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "статистика датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "распределение классов",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка корпуса",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "корпус данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "обучающие данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "тестовые данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "отчёт лабораторная работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчет лабораторная работа",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа №5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный практикум по физике",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "physics laboratory report",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "00:00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00:01",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "1\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "2\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1  (",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2  (",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры к видео",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка youtube",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "youtube subtitles",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "video captions",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "глава первая",
+    "category": "Media/Books"
+  },
+  {
+    "text": "глава вторая",
+    "category": "Media/Books"
+  },
+  {
+    "text": "отрывок из романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "фрагмент романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "литературный фрагмент",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book fragment",
+    "category": "Media/Books"
+  },
+  {
+    "text": "резюме на должность",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "cv for position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "resume for position",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate work experience",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "candidate skills",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "опыт работы кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "ключевые навыки кандидата",
+    "category": "Career/Resume"
+  },
+  {
+    "text": "методические указания",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "методические рекомендации",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "методическое пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебное пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно-методическое пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно методическое пособие",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно-методические материалы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно методические материалы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебно-методические материалы дисциплины",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебные материалы по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "рабочая программа дисциплины",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "рабочая программа",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебная программа",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "силлабус",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "электронный учебник",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "курс лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспект лекции",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспект по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспект по теме",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "лекционные материалы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "лекционные материалы курса",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "лекционные материалы по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы лекции",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы курса",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретические сведения",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретические сведения по теме",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретический материал по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теоретические материалы по теме",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "экзаменационные вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "вопросы к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "экзаменационные билеты",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "зачетные вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "зачётные вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "вопросы к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "вопросы к зачету",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "подготовка к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "подготовка к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "подготовка к зачету",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы к зачету",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы для подготовки к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "повторение перед экзаменом",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "блиц-вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "блиц вопросы",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "шпаргалка к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "шпаргалка по дисциплине",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course materials",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course study materials",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "study materials for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "study guide for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course guide",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course handbook",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course syllabus",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "lecture notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course lecture notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "lecture handout",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "lecture materials",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam questions",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam preparation",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam review",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam review notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "question bank",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "revision notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "review notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "cheat sheet for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "theoretical material for course",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "датасет.csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "датасет.json",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "датасет.jsonl",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "набор данных csv",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "набор данных json",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "структура набора данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "описание набора данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "распределение меток",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "валидационные данные",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "training data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "test data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "validation data",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "labeled dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "annotated dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "лабораторная физика",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторный стенд",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторные измерения",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory measurements",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "2 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "2ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "2_ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "2ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "3 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "3ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "3_ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "3ndfl",
+    "category": "Finance"
+  },
+  {
+    "text": "форма 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "форма 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 2 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка по форме 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка по форме 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "форма справки о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "сведения о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "доходы физического лица",
+    "category": "Finance"
+  },
+  {
+    "text": "налог на доходы физических лиц",
+    "category": "Finance"
+  },
+  {
+    "text": "ндфл справка",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая декларация",
+    "category": "Finance"
+  },
+  {
+    "text": "декларация 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "декларация 3 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговый вычет",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая база",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "исчисленная сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "удержанная сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "исчислено налога",
+    "category": "Finance"
+  },
+  {
+    "text": "удержано налога",
+    "category": "Finance"
+  },
+  {
+    "text": "не удержано налога",
+    "category": "Finance"
+  },
+  {
+    "text": "код дохода",
+    "category": "Finance"
+  },
+  {
+    "text": "код вычета",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма вычета",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговый агент",
+    "category": "Finance"
+  },
+  {
+    "text": "код налогового органа",
+    "category": "Finance"
+  },
+  {
+    "text": "код ифнс",
+    "category": "Finance"
+  },
+  {
+    "text": "код октмо",
+    "category": "Finance"
+  },
+  {
+    "text": "признак справки",
+    "category": "Finance"
+  },
+  {
+    "text": "номер корректировки",
+    "category": "Finance"
+  },
+  {
+    "text": "кассовый чек",
+    "category": "Finance"
+  },
+  {
+    "text": "товарный чек",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный чек",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный документ",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный признак",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный накопитель",
+    "category": "Finance"
+  },
+  {
+    "text": "qr-код чека",
+    "category": "Finance"
+  },
+  {
+    "text": "квитанция об оплате",
+    "category": "Finance"
+  },
+  {
+    "text": "платежное поручение",
+    "category": "Finance"
+  },
+  {
+    "text": "платёжное поручение",
+    "category": "Finance"
+  },
+  {
+    "text": "платежный документ",
+    "category": "Finance"
+  },
+  {
+    "text": "платёжный документ",
+    "category": "Finance"
+  },
+  {
+    "text": "счет на оплату",
+    "category": "Finance"
+  },
+  {
+    "text": "счёт на оплату",
+    "category": "Finance"
+  },
+  {
+    "text": "банковская выписка",
+    "category": "Finance"
+  },
+  {
+    "text": "выписка по счету",
+    "category": "Finance"
+  },
+  {
+    "text": "выписка по счёту",
+    "category": "Finance"
+  },
+  {
+    "text": "акт сверки",
+    "category": "Finance"
+  },
+  {
+    "text": "акт сверки взаиморасчетов",
+    "category": "Finance"
+  },
+  {
+    "text": "акт сверки взаиморасчётов",
+    "category": "Finance"
+  },
+  {
+    "text": "приходный кассовый ордер",
+    "category": "Finance"
+  },
+  {
+    "text": "расходный кассовый ордер",
+    "category": "Finance"
+  },
+  {
+    "text": "tax return",
+    "category": "Finance"
+  },
+  {
+    "text": "tax declaration",
+    "category": "Finance"
+  },
+  {
+    "text": "tax deduction",
+    "category": "Finance"
+  },
+  {
+    "text": "taxable income",
+    "category": "Finance"
+  },
+  {
+    "text": "tax agent",
+    "category": "Finance"
+  },
+  {
+    "text": "tax certificate",
+    "category": "Finance"
+  },
+  {
+    "text": "income certificate",
+    "category": "Finance"
+  },
+  {
+    "text": "certificate of income",
+    "category": "Finance"
+  },
+  {
+    "text": "income tax certificate",
+    "category": "Finance"
+  },
+  {
+    "text": "payment receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "sales receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "cash receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "tax invoice",
+    "category": "Finance"
+  },
+  {
+    "text": "payment invoice",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice number",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice total",
+    "category": "Finance"
+  },
+  {
+    "text": "receipt number",
+    "category": "Finance"
+  },
+  {
+    "text": "receipt total",
+    "category": "Finance"
+  },
+  {
+    "text": "bank statement",
+    "category": "Finance"
+  },
+  {
+    "text": "payment order",
+    "category": "Finance"
+  },
+  {
+    "text": "fiscal receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "fiscal document",
+    "category": "Finance"
+  },
+  {
+    "text": "qr code receipt",
+    "category": "Finance"
+  },
+  {
+    "text": "домашнее задание вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "домашняя работа вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "самостоятельная работа вариант",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решение домашнего задания",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "решение контрольной работы",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "homework assignment",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "homework solution",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "worksheet problems",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "problem set solution",
+    "category": "Education/Homework"
+  },
+  {
+    "text": "full transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "subtitle transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "captions transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка разговора",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка диалога",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "полная расшифровка",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "текст субтитров",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры к ролику",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "dataset folder",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset files",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "dataset metadata",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "training dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "testing dataset",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "разметка набора данных",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "файлы датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "папка датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "метаданные датасета",
+    "category": "Data/Datasets"
+  },
+  {
+    "text": "mit license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache license version 2.0",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache 2.0 license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "bsd license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "bsd 2-clause license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "bsd 3-clause license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "gnu general public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "gnu lesser general public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "gnu affero general public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "mozilla public license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "creative commons license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "open source license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "software license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "third party licenses",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "license file",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "license text",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "license terms",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "software license agreement",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "open source software license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "permission is hereby granted",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "copyright and permission notice",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "copyright notice and this permission notice",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistribution and use in source and binary forms",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistributions of source code",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistributions in binary form",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "source and binary forms",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "this software is provided",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "the software is provided as is",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "software is provided as is",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "without warranty of any kind",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "express or implied warranties",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "merchantability and fitness",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "fitness for a particular purpose",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "in no event shall the authors",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "in no event shall the copyright holder",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "contributors be liable",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "terms and conditions for use reproduction and distribution",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "terms and conditions for use, reproduction, and distribution",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "apache software foundation",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under the apache license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under the mit license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under the bsd license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "licensed under gpl",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "open source notices",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "copyright notices",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "redistribution conditions",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "source code license",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия mit",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия apache",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия bsd",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия gpl",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензия на программное обеспечение",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензионное соглашение",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "текст лицензии",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "условия лицензии",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "лицензионные условия",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "файл лицензии",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "уведомление об авторских правах",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "авторские права и разрешение",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "отказ от ответственности",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "без каких-либо гарантий",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "программное обеспечение предоставляется как есть",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "распространение и использование",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "открытый исходный код",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "права на использование программного обеспечения",
+    "category": "IT/Licenses"
+  },
+  {
+    "text": "форма 2 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "форма 3 ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 2ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "справка 3ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая справка 2-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая справка о доходах",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговый период",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма фиксированных авансовых платежей",
+    "category": "Finance"
+  },
+  {
+    "text": "общая сумма налога",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога удержанная",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога исчисленная",
+    "category": "Finance"
+  },
+  {
+    "text": "сумма налога перечисленная",
+    "category": "Finance"
+  },
+  {
+    "text": "признак налогоплательщика",
+    "category": "Finance"
+  },
+  {
+    "text": "ИНН налогового агента",
+    "category": "Finance"
+  },
+  {
+    "text": "КПП налогового агента",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальный признак документа",
+    "category": "Finance"
+  },
+  {
+    "text": "номер фискального документа",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice amount",
+    "category": "Finance"
+  },
+  {
+    "text": "invoice date",
+    "category": "Finance"
+  },
+  {
+    "text": "tax invoice number",
+    "category": "Finance"
+  },
+  {
+    "text": "income statement tax",
+    "category": "Finance"
+  },
+  {
+    "text": "лабораторная работа № 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 3",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 4",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа № 5",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа n1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа n2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчет по лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "отчёт по лабораторной работе",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по физике",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по ос",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по информатике",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная работа по программированию",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "лабораторная установка схема",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "цель лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "вывод лабораторной",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work no 1",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "lab work no 2",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory report no",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "laboratory assignment no",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "учебные материалы курса",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "учебные материалы дисциплины",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материалы лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "конспекты лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "электронный курс лекций",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теория к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "теория к зачёту",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "экзаменационный материал",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "материал для подготовки к экзамену",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "course notes for exam",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "exam theory notes",
+    "category": "Education/Materials"
+  },
+  {
+    "text": "содержание художественной книги",
+    "category": "Media/Books"
+  },
+  {
+    "text": "страницы романа",
+    "category": "Media/Books"
+  },
+  {
+    "text": "текст художественного произведения",
+    "category": "Media/Books"
+  },
+  {
+    "text": "book pages",
+    "category": "Media/Books"
+  },
+  {
+    "text": "novel pages",
+    "category": "Media/Books"
+  },
+  {
+    "text": "fiction text",
+    "category": "Media/Books"
+  },
+  {
+    "text": "chapter from novel",
+    "category": "Media/Books"
+  },
+  {
+    "text": "00:00:02",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "00:00:03",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "1\r\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "2\r\n00:00",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 1 (00:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker 2 (00:",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "транскрипция аудио",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка голосового сообщения",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "паспортные данные",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "данные паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "копия паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "скан паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "фото паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "разворот паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспорт гражданина рф",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспорт рф",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "российский паспорт",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "серия паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "серия и номер паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "серия номер паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "кем выдан паспорт",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "дата выдачи паспорта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "код подразделения",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспортная страница",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "удостоверение личности",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ удостоверяющий личность",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ, удостоверяющий личность",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ удостоверяющий личность гражданина",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "документ, удостоверяющий личность гражданина",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "снилс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер снилс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "страховой номер индивидуального лицевого счета",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "страховой номер индивидуального лицевого счёта",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "полис омс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "полис дмс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер полиса омс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "номер полиса дмс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "медицинский полис омс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "медицинский полис дмс",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "согласие на обработку персональных данных",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "согласие субъекта персональных данных",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "обработка персональных данных заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "адрес регистрации по паспорту",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "место регистрации по паспорту",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "регистрация по месту жительства",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "регистрация по месту пребывания",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "анкета заявителя персональные данные",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "личная анкета заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "персональная анкета заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "подпись заявителя",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "нотариальная доверенность",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "доверенность на представление интересов",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "акт приема-передачи документов",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "акт приёма-передачи документов",
+    "category": "Personal/Documents"
+  },
+  {
+    "text": "паспорт налогоплательщика",
+    "category": "Finance"
+  },
+  {
+    "text": "ИНН налогоплательщика",
+    "category": "Finance"
+  },
+  {
+    "text": "сведения о доходах физического лица",
+    "category": "Finance"
+  },
+  {
+    "text": "справка о доходах физического лица",
+    "category": "Finance"
+  },
+  {
+    "text": "налоговая декларация 3-ндфл",
+    "category": "Finance"
+  },
+  {
+    "text": "расчет суммы налога",
+    "category": "Finance"
+  },
+  {
+    "text": "расчёт суммы налога",
+    "category": "Finance"
+  },
+  {
+    "text": "фискальные данные чека",
+    "category": "Finance"
+  },
+  {
+    "text": "справка выдана студенту",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка выдана студентке",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждает что обучается",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "подтверждает, что обучается",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается по очной форме",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "обучается по заочной форме",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "зачислен на обучение",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "справка для предоставления по месту требования",
+    "category": "Education/Certificates"
+  },
+  {
+    "text": "результаты лабораторной работы",
+    "category": "Education/Labworks"
+  },
+  {
+    "text": "transcript speaker",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "speaker transcript",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "расшифровка спикер",
+    "category": "Media/Transcript"
+  },
+  {
+    "text": "субтитры таймкод",
+    "category": "Media/Transcript"
+  }
+]
+</file>
+
+<file path="exporter/json.go">
+package exporter
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+)
+
+func SaveJSON(path string, data any) error {
+	bytes, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(path)
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, bytes, 0644)
+}
+</file>
+
+<file path="extractor/extractor.py">
+from pathlib import Path
+from pypdf import PdfReader
+from docx import Document
+import logging
+
+logging.getLogger("pypdf").setLevel(logging.ERROR)
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+FILES_FILE = PROJECT_ROOT / "files" / "files.json"
+
+PREVIEW_CHARS = 4000
+
+def extract_preview(path: str, ext: str) -> str:
+    ext = ext.lower()
+
+    if ext == ".pdf":
+        return extract_pdf(path)
+    elif ext in [".docx", "doc"]:
+        return extract_doc(path)
+    
+    return ""
+
+def limit_text(text: str) -> str:
+    return text[:PREVIEW_CHARS]
+
+def extract_pdf(path: str) -> str:
+    try:
+        reader = PdfReader(path, strict=False)
+
+        chunks = []
+
+        for page in reader.pages[:2]:
+            text = page.extract_text() or ""
+            chunks.append(text)
+
+            if len("\n".join(chunks)) >= PREVIEW_CHARS:
+                break
+        return limit_text("\n".join(chunks))
+    except Exception:
+        return ""
+    
+
+def extract_doc(path: str) -> str:
+    try:
+        document = Document(path)
+
+        chunks = []
+
+        for paragraph in document.paragraphs:
+            text = paragraph.text.strip()
+            if text:
+                chunks.append(text)
+
+            if len("\n".join(chunks)) >= PREVIEW_CHARS:
+                return limit_text("\n".join(chunks))
+            
+
+        for table in document.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text = cell.text.strip()
+                    if text:
+                        chunks.append(text)
+
+                    if len("\n".join(chunks)) >= PREVIEW_CHARS:
+                        return limit_text("\n".join(chunks))
+
+        return limit_text("\n".join(chunks))
+    except Exception:
+        return ""
+</file>
+
+<file path="project_path/project_path.go">
+package projectpath
+
+import (
+	"path/filepath"
+	"runtime"
+)
+
+func Root() string {
+	_, filename, _, _ := runtime.Caller(0)
+
+	return filepath.Dir(filepath.Dir(filename))
+}
+
+func FilesJSON() string {
+	return filepath.Join(Root(), "files", "files.json")
+}
+
+func ClassifiedFilesJSON() string {
+	return filepath.Join(Root(), "files", "classified_files.json")
+}
+</file>
+
+<file path="scanner/scanner.go">
+package scanner
+
+import (
+	"bytes"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+
+	stdunicode "unicode"
+
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
+)
+
+type Scanner struct {
+	supportExtentions map[string]bool
+}
+
+func NewScanner() *Scanner {
+	return &Scanner{
+		supportExtentions: map[string]bool{
+			".pdf":  true,
+			".txt":  true,
+			".doc":  true,
+			".docx": true,
+			".md":   true},
+	}
+}
+
+type File struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
+	Ext  string `json:"ext"`
+	Text string `json:"text"`
+}
+
+func (sc *Scanner) ScanDirs(root string) ([]File, error) {
+	root, err := ExpandPath(root)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []File
+
+	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+
+		ext := strings.ToLower(filepath.Ext(path))
+
+		if sc.supportExtentions[ext] {
+			files = append(files, File{
+				Path: path,
+				Ext:  ext,
+				Name: info.Name(),
+				Text: readTextPreview(path, ext),
+			})
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func readTextPreview(path, ext string) string {
+	previewData := 4 * 1024
+
+	switch ext {
+	case ".md", ".txt":
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return ""
+		}
+
+		if len(data) > previewData {
+			data = data[:previewData]
+		}
+
+		text := decodeText(data)
+		return cleanText(text)
+	default:
+		return ""
+	}
+}
+
+func decodeText(data []byte) string {
+	if len(data) >= 2 && data[0] == 0xFF && data[1] == 0xFE {
+		decoder := unicode.UTF16(unicode.LittleEndian, unicode.ExpectBOM).NewDecoder()
+		result, _, err := transform.Bytes(decoder, data)
+		if err == nil {
+			return string(result)
+		}
+	}
+
+	if len(data) >= 2 && data[0] == 0xFE && data[1] == 0xFF {
+		decoder := unicode.UTF16(unicode.BigEndian, unicode.ExpectBOM).NewDecoder()
+		result, _, err := transform.Bytes(decoder, data)
+		if err == nil {
+			return string(result)
+		}
+	}
+
+	if bytes.Count(data, []byte{0x00}) > len(data)/4 {
+		decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
+		result, _, err := transform.Bytes(decoder, data)
+		if err == nil {
+			return string(result)
+		}
+	}
+
+	return string(data)
+}
+
+func cleanText(s string) string {
+	var b strings.Builder
+
+	for _, r := range s {
+		if r == '\n' || r == '\t' || r == '\r' {
+			b.WriteRune(r)
+			continue
+		}
+
+		if stdunicode.IsControl(r) {
+			continue
+		}
+
+		b.WriteRune(r)
+	}
+
+	return strings.TrimSpace(b.String())
+}
+
+func ExpandPath(path string) (string, error) {
+	path = strings.TrimSpace(path)
+
+	if path == "" {
+		return "", os.ErrInvalid
+	}
+
+	if path == "~" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+
+		path = home
+	} else if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+
+		path = filepath.Join(home, path[2:])
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+
+	info, err := os.Stat(absPath)
+	if err != nil {
+		return "", err
+	}
+
+	if !info.IsDir() {
+		return "", fmt.Errorf("source path is not a directory: %s", absPath)
+	}
+
+	return absPath, nil
+}
+</file>
+
+<file path="src/main.go">
+package main
+
+import "TidyFS/tui"
+
+func main() {
+	tui.Run()
+}
+</file>
+
+<file path="go.mod">
+module TidyFS
+
+go 1.26.2
+
+require (
+	github.com/charmbracelet/bubbles v1.0.0
+	github.com/charmbracelet/bubbletea v1.3.10
+	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/hanwen/go-fuse/v2 v2.10.1
+	golang.org/x/text v0.36.0
+)
+
+require (
+	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/charmbracelet/colorprofile v0.4.1 // indirect
+	github.com/charmbracelet/x/ansi v0.11.6 // indirect
+	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
+	github.com/charmbracelet/x/term v0.2.2 // indirect
+	github.com/clipperhouse/displaywidth v0.9.0 // indirect
+	github.com/clipperhouse/stringish v0.1.1 // indirect
+	github.com/clipperhouse/uax29/v2 v2.5.0 // indirect
+	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
+	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-localereader v0.0.1 // indirect
+	github.com/mattn/go-runewidth v0.0.19 // indirect
+	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
+	github.com/muesli/cancelreader v0.2.2 // indirect
+	github.com/muesli/termenv v0.16.0 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	golang.org/x/sys v0.38.0 // indirect
+)
+</file>
+
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2026 Alexandr Babenko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="Makefile">
+APP_NAME := tidyfs
+MAIN := ./src/main.go
+
+BUILD_DIR := bin
+APP_BIN := $(BUILD_DIR)/$(APP_NAME)
+
+VENV := .venv
+VENV_PYTHON := $(VENV)/bin/python
+VENV_PIP := $(VENV)/bin/pip
+
+REQ_FILE := requirements.txt
+
+GO := go
+PYTHON_SYSTEM := python3
+
+.PHONY: all deps go-deps py-deps build run dev clean py-clean clean-all rebuild help
+
+all: deps build
+
+deps: go-deps py-deps
+
+go-deps:
+	$(GO) mod tidy
+	$(GO) mod download
+
+$(VENV_PYTHON):
+	$(PYTHON_SYSTEM) -m venv $(VENV)
+
+py-venv: $(VENV_PYTHON)
+
+py-deps: $(VENV_PYTHON)
+	$(VENV_PIP) install --upgrade pip
+	$(VENV_PIP) install -r $(REQ_FILE)
+
+build:
+	mkdir -p $(BUILD_DIR)
+	$(GO) build -o $(APP_BIN) $(MAIN)
+
+run: build
+	./$(APP_BIN)
+
+dev: deps run
+
+rebuild: clean all
+
+clean:
+	rm -rf $(BUILD_DIR)
+
+py-clean:
+	rm -rf $(VENV)
+
+clean-all: clean py-clean
+	rm -rf classifier/__pycache__
+	rm -rf extractor/__pycache__
+	rm -rf files/*.json
+
+help:
+	@echo "TidyFS Makefile"
+	@echo ""
+	@echo "Commands:"
+	@echo "  make              install deps and build"
+	@echo "  make deps         install Go and Python deps"
+	@echo "  make go-deps      run go mod tidy/download"
+	@echo "  make py-venv      create Python virtualenv"
+	@echo "  make py-deps      install Python deps"
+	@echo "  make build        build Go binary into bin/tidyfs"
+	@echo "  make run          build and run app"
+	@echo "  make dev          install deps, build and run"
+	@echo "  make clean        remove bin/"
+	@echo "  make py-clean     remove .venv/"
+	@echo "  make clean-all    remove bin, venv, pycache and generated json"
+</file>
+
+<file path="classifier/train.ipynb">
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "457d376c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import json\n",
+    "from pathlib import Path\n",
+    "\n",
+    "import joblib\n",
+    "\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.pipeline import Pipeline, FeatureUnion\n",
+    "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "from sklearn.metrics import classification_report, accuracy_score"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "36c176d5",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "BASE_DIR = Path.cwd()\n",
+    "DATA_PATH = BASE_DIR / \"training_data.json\"\n",
+    "MODELS_DIR = BASE_DIR / \"models\"\n",
+    "\n",
+    "MODELS_DIR.mkdir(exist_ok=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "8a3b8eef",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "CATEGORY_MERGE_MAP = {\n",
+    "    \"Education/Homework\": \"Education/Assignments\",\n",
+    "    \"Education/Labworks\": \"Education/Assignments\",\n",
+    "\n",
+    "    \"Education/Certificates\": \"Documents/Personal\",\n",
+    "    \"Personal/Documents\": \"Documents/Personal\",\n",
+    "\n",
+    "    \"Media/Books\": \"Education/Materials\",\n",
+    "    \"Education/Materials\": \"Education/Materials\",\n",
+    "\n",
+    "    \"Career/Internship\": \"Career/Internship\",\n",
+    "    \"Career/Resume\": \"Career/Resume\",\n",
+    "    \"Data/Datasets\": \"Education/Materials\",\n",
+    "    \"Education/Project\": \"Education/Project\",\n",
+    "    \"Finance\": \"Finance\",\n",
+    "    \"IT/Licenses\": \"IT/Licenses\",\n",
+    "    \"Media/Transcript\": \"Media/Transcript\",\n",
+    "}\n",
+    "\n",
+    "\n",
+    "def merge_category(category: str) -> str:\n",
+    "    return CATEGORY_MERGE_MAP.get(category, category)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0a894b4a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "texts = []\n",
+    "labels = []\n",
+    "\n",
+    "with open(DATA_PATH) as f:\n",
+    "    jf = json.load(f)\n",
+    "\n",
+    "for note in jf:\n",
+    "    texts.append(note[\"text\"])\n",
+    "    labels.append(note[\"category\"])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "59eff397",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(\n",
+    "    texts,\n",
+    "    labels,\n",
+    "    test_size=0.2,\n",
+    "    random_state=42,\n",
+    "    stratify=labels\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a05eb68f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pipeline = Pipeline([\n",
+    "    (\"features\", FeatureUnion([\n",
+    "        (\"word_tfidf\", TfidfVectorizer(\n",
+    "            analyzer=\"word\",\n",
+    "            ngram_range=(1, 3),\n",
+    "            min_df=1,\n",
+    "            sublinear_tf=True,\n",
+    "        )),\n",
+    "        (\"char_tfidf\", TfidfVectorizer(\n",
+    "            analyzer=\"char_wb\",\n",
+    "            ngram_range=(3, 5),\n",
+    "            min_df=1,\n",
+    "            sublinear_tf=True,\n",
+    "        )),\n",
+    "    ])),\n",
+    "    (\"clf\", LogisticRegression(\n",
+    "        max_iter=5000,\n",
+    "        class_weight=\"balanced\",\n",
+    "        C=1.5,\n",
+    "        solver=\"lbfgs\",\n",
+    "    ))\n",
+    "])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "73b4aded",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pipeline.fit(X_train, y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "96585fce",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_pred = pipeline.predict(X_test)\n",
+    "\n",
+    "print(\"Accuracy:\", accuracy_score(y_test, y_pred))\n",
+    "print()\n",
+    "print(classification_report(y_test, y_pred))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "30a20456",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "MODEL_PATH = MODELS_DIR / \"classifier.joblib\"\n",
+    "\n",
+    "joblib.dump(pipeline, MODEL_PATH)\n",
+    "\n",
+    "print(f\"Модель сохранена в {MODEL_PATH}\")"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
+</file>
+
+<file path="classifier_runner/classifier_runner.go">
+package classifier_runner
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+func RunClassifier(projectRoot string, mode string) error {
+
+	var mode_file strings.Builder
+
+	mode_file.WriteString("classifier_")
+	mode_file.WriteString(mode)
+	mode_file.WriteString(".py")
+
+	pythonPath := filepath.Join(projectRoot, ".venv", "bin", "python")
+	scriptPath := filepath.Join(projectRoot, "classifier", mode_file.String())
+
+	if _, err := os.Stat(pythonPath); err != nil {
+		return fmt.Errorf("venv python not found: %s\nrun: make py-deps", pythonPath)
+	}
+
+	if _, err := os.Stat(scriptPath); err != nil {
+		return fmt.Errorf("classifier script not found: %s", scriptPath)
+	}
+
+	cmd := exec.Command(pythonPath, scriptPath)
+	cmd.Dir = projectRoot
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf(
+			"classifier failed: %w\nstdout:\n%s\nstderr:\n%s",
+			err,
+			stdout.String(),
+			stderr.String(),
+		)
+	}
+
+	return nil
+}
+</file>
+
+<file path="tui/tui.go">
+package tui
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"TidyFS/carrier"
+	"TidyFS/classifier_runner"
+	"TidyFS/exporter"
+	projectpath "TidyFS/project_path"
+	"TidyFS/scanner"
+)
+
+type Mode string
+
+type ClassifierMode string
+
+const (
+	ClassifierTFIDF ClassifierMode = "tf_idf"
+	ClassifierLLM   ClassifierMode = "llm"
+)
+
+const (
+	ModeFuse Mode = "fuse"
+	ModeMove Mode = "move"
+	ModeCopy Mode = "copy"
+)
+
+type Screen int
+
+const (
+	ScreenForm Screen = iota
+	ScreenPipeline
+	ScreenDone
+)
+
+type StageStatus int
+
+const (
+	StagePending StageStatus = iota
+	StageRunning
+	StageDone
+	StageFailed
+)
+
+type Result struct {
+	Source         string
+	Target         string
+	Mode           Mode
+	CleanTarget    bool
+	ClassifierMode ClassifierMode
+}
+
+type Stage struct {
+	Title       string
+	Description string
+	Status      StageStatus
+}
+
+type Model struct {
+	inputs         []textinput.Model
+	focus          int
+	mode           Mode
+	cleanTarget    bool
+	classifierMode ClassifierMode
+
+	width  int
+	height int
+
+	screen Screen
+	result Result
+
+	stages       []Stage
+	currentStage int
+	err          error
+
+	pulse bool
+
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+const cardWidth = 76
+const inputWidth = 54
+const maxFocus = 4
+
+var (
+	colorText    = lipgloss.Color("#e7e9ee")
+	colorMuted   = lipgloss.Color("#8b90a0")
+	colorDim     = lipgloss.Color("#4b5162")
+	colorAccent  = lipgloss.Color("#8b5cf6")
+	colorAccent2 = lipgloss.Color("#22d3ee")
+	colorGreen   = lipgloss.Color("#34d399")
+	colorRed     = lipgloss.Color("#fb7185")
+	colorOrange  = lipgloss.Color("#fb923c")
+	colorYellow  = lipgloss.Color("#facc15")
+
+	titleStyle = lipgloss.NewStyle().
+			Foreground(colorAccent2).
+			Bold(true).
+			Padding(0, 1)
+
+	subtitleStyle = lipgloss.NewStyle().
+			Foreground(colorText).
+			Bold(true)
+
+	descStyle = lipgloss.NewStyle().
+			Foreground(colorMuted)
+
+	labelStyle = lipgloss.NewStyle().
+			Foreground(colorMuted).
+			Bold(true).
+			MarginBottom(1)
+
+	helpStyle = lipgloss.NewStyle().
+			Foreground(colorDim)
+
+	inputBoxStyle = lipgloss.NewStyle().
+			Width(inputWidth).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(colorDim).
+			Padding(0, 1)
+
+	inputBoxFocusedStyle = inputBoxStyle.Copy().
+				BorderForeground(colorAccent2)
+
+	modeStyle = lipgloss.NewStyle().
+			Padding(0, 3).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(colorDim).
+			Foreground(colorMuted)
+
+	modeFocusedStyle = modeStyle.Copy().
+				BorderForeground(colorAccent2).
+				Foreground(colorText)
+
+	modeActiveStyle = modeStyle.Copy().
+			Background(colorAccent).
+			Foreground(lipgloss.Color("#ffffff")).
+			BorderForeground(colorAccent).
+			Bold(true)
+
+	modeActiveFocusedStyle = modeActiveStyle.Copy().
+				BorderForeground(colorAccent2)
+
+	contentStyle = lipgloss.NewStyle().
+			Width(cardWidth-8).
+			Padding(1, 4, 1, 4)
+
+	errorStyle = lipgloss.NewStyle().
+			Foreground(colorRed).
+			Bold(true)
+
+	successStyle = lipgloss.NewStyle().
+			Foreground(colorGreen).
+			Bold(true)
+)
+
+type stageFinishedMsg struct {
+	index int
+	err   error
+}
+
+type pulseMsg struct{}
+
+func New() Model {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	source := textinput.New()
+	source.Placeholder = "~/Downloads"
+	source.Width = inputWidth - 6
+	source.Prompt = "❯ "
+	source.PromptStyle = lipgloss.NewStyle().Foreground(colorAccent2)
+	source.TextStyle = lipgloss.NewStyle().Foreground(colorText)
+	source.PlaceholderStyle = lipgloss.NewStyle().Foreground(colorDim)
+	source.Focus()
+
+	target := textinput.New()
+	target.Placeholder = "~/TidyFS"
+	target.Width = inputWidth - 6
+	target.Prompt = "❯ "
+	target.PromptStyle = lipgloss.NewStyle().Foreground(colorAccent2)
+	target.TextStyle = lipgloss.NewStyle().Foreground(colorText)
+	target.PlaceholderStyle = lipgloss.NewStyle().Foreground(colorDim)
+
+	return Model{
+		inputs:         []textinput.Model{source, target},
+		mode:           ModeFuse,
+		cleanTarget:    false,
+		classifierMode: ClassifierTFIDF,
+		screen:         ScreenForm,
+		stages:         defaultStages(ModeFuse, ClassifierTFIDF),
+		ctx:            ctx,
+		cancel:         cancel,
+	}
+}
+
+func Run() (Result, error) {
+	finalModel, err := tea.NewProgram(
+		New(),
+		tea.WithAltScreen(),
+		tea.WithMouseCellMotion(),
+	).Run()
+
+	if err != nil {
+		return Result{}, err
+	}
+
+	m, ok := finalModel.(Model)
+	if !ok {
+		return Result{}, fmt.Errorf("unexpected TUI model")
+	}
+
+	if m.err != nil {
+		return m.result, m.err
+	}
+
+	return m.result, nil
+}
+
+func (m Model) Init() tea.Cmd {
+	return textinput.Blink
+}
+
+func pulseTick() tea.Cmd {
+	return tea.Tick(450*time.Millisecond, func(time.Time) tea.Msg {
+		return pulseMsg{}
+	})
+}
+
+func (m Model) quit() (tea.Model, tea.Cmd) {
+	if m.cancel != nil {
+		m.cancel()
+	}
+
+	return m, tea.Quit
+}
+
+func (m *Model) resetToForm() {
+	m.screen = ScreenForm
+	m.result = Result{}
+	m.err = nil
+	m.currentStage = 0
+	m.pulse = false
+	m.stages = defaultStages(m.mode, m.classifierMode)
+	m.focus = 0
+	m.updateFocus()
+}
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c":
+			return m.quit()
+		}
+
+		switch m.screen {
+		case ScreenForm:
+			switch msg.String() {
+			case "esc":
+				return m.quit()
+			}
+
+			var cmd tea.Cmd
+			m, cmd = m.updateFormKey(msg)
+
+			var inputCmds []tea.Cmd
+
+			for i := range m.inputs {
+				var inputCmd tea.Cmd
+				m.inputs[i], inputCmd = m.inputs[i].Update(msg)
+				inputCmds = append(inputCmds, inputCmd)
+			}
+
+			return m, tea.Batch(append(inputCmds, cmd)...)
+
+		case ScreenPipeline:
+			switch msg.String() {
+			case "esc":
+				return m.quit()
+			}
+
+			return m, nil
+
+		case ScreenDone:
+			switch msg.String() {
+			case "esc", "enter":
+				m.resetToForm()
+				return m, nil
+
+			case "q":
+				return m.quit()
+			}
+		}
+
+	case stageFinishedMsg:
+		return m.updateStage(msg)
+
+	case pulseMsg:
+		if m.screen != ScreenPipeline {
+			return m, nil
+		}
+
+		m.pulse = !m.pulse
+		return m, pulseTick()
+	}
+
+	if m.screen != ScreenForm {
+		return m, nil
+	}
+
+	var cmds []tea.Cmd
+
+	for i := range m.inputs {
+		var cmd tea.Cmd
+		m.inputs[i], cmd = m.inputs[i].Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m Model) updateFormKey(msg tea.KeyMsg) (Model, tea.Cmd) {
+	switch msg.String() {
+	case "tab", "down":
+		m.focus++
+		if m.focus > maxFocus {
+			m.focus = 0
+		}
+		m.updateFocus()
+		return m, nil
+
+	case "shift+tab", "up":
+		m.focus--
+		if m.focus < 0 {
+			m.focus = maxFocus
+		}
+		m.updateFocus()
+		return m, nil
+
+	case "left", "right", " ":
+		if m.focus == 2 {
+			m.toggleMode()
+			m.stages = defaultStages(m.mode, m.classifierMode)
+			return m, nil
+		}
+
+		if m.focus == 3 {
+			m.cleanTarget = !m.cleanTarget
+			return m, nil
+		}
+
+		if m.focus == 4 {
+			m.toggleClassifierMode()
+			m.stages = defaultStages(m.mode, m.classifierMode)
+			return m, nil
+		}
+
+	case "enter":
+		if m.focus < maxFocus {
+			m.focus++
+			m.updateFocus()
+			return m, nil
+		}
+
+		m.result = Result{
+			Source:         strings.TrimSpace(m.inputs[0].Value()),
+			Target:         strings.TrimSpace(m.inputs[1].Value()),
+			Mode:           m.mode,
+			CleanTarget:    m.cleanTarget,
+			ClassifierMode: m.classifierMode,
+		}
+
+		m.screen = ScreenPipeline
+		m.currentStage = 0
+		m.stages = defaultStages(m.mode, m.classifierMode)
+		m.stages[0].Status = StageRunning
+		m.pulse = false
+
+		return m, tea.Batch(
+			runStage(m.ctx, 0, m.result),
+			pulseTick(),
+		)
+	}
+
+	return m, nil
+}
+
+func (m Model) updateStage(msg stageFinishedMsg) (tea.Model, tea.Cmd) {
+	if msg.index < 0 || msg.index >= len(m.stages) {
+		return m, nil
+	}
+
+	if msg.err != nil {
+		m.stages[msg.index].Status = StageFailed
+		m.err = msg.err
+		m.screen = ScreenDone
+		return m, nil
+	}
+
+	m.stages[msg.index].Status = StageDone
+
+	next := msg.index + 1
+	if next >= len(m.stages) {
+		m.screen = ScreenDone
+		return m, nil
+	}
+
+	m.currentStage = next
+	m.stages[next].Status = StageRunning
+
+	return m, runStage(m.ctx, next, m.result)
+}
+
+func runStage(ctx context.Context, index int, result Result) tea.Cmd {
+	return func() tea.Msg {
+		var err error
+
+		switch index {
+		case 0:
+			err = scanFoldersAndFiles(result.Source)
+
+		case 1:
+			err = classifyAndDistribute(result.ClassifierMode)
+
+		case 2:
+			if result.Mode == ModeFuse {
+				err = runFuse(ctx, result.Target)
+			} else {
+				if result.CleanTarget {
+					err = cleanTargetDirectory(result.Source, result.Target)
+				}
+
+				if err == nil && result.Mode == ModeMove {
+					err = moveFiles(result.Source, result.Target)
+				}
+
+				if err == nil && result.Mode == ModeCopy {
+					err = copyFiles(result.Source, result.Target)
+				}
+			}
+
+		case 3:
+			err = finishPipeline()
+		}
+
+		return stageFinishedMsg{
+			index: index,
+			err:   err,
+		}
+	}
+}
+
+func scanFoldersAndFiles(source string) error {
+	scn := scanner.NewScanner()
+
+	files, err := scn.ScanDirs(source)
+	if err != nil {
+		return err
+	}
+
+	return exporter.SaveJSON(projectpath.FilesJSON(), files)
+}
+
+func classifyAndDistribute(mode ClassifierMode) error {
+	return classifier_runner.RunClassifier(projectpath.Root(), string(mode))
+}
+
+func runFuse(ctx context.Context, target string) error {
+	target, err := scanner.ExpandPath(target)
+	if err != nil {
+		return err
+	}
+
+	return carrier.FuseRun(ctx, target)
+}
+
+func moveFiles(source string, target string) error {
+	return carrier.FileSystemCarrierRun(source, target, "move")
+}
+
+func copyFiles(source string, target string) error {
+	return carrier.FileSystemCarrierRun(source, target, "copy")
+}
+
+func cleanTargetDirectory(source string, target string) error {
+	sourcePath, err := scanner.ExpandPath(source)
+	if err != nil {
+		return err
+	}
+
+	targetPath, err := expandPathLoose(target)
+	if err != nil {
+		return err
+	}
+
+	sourcePath, err = filepath.Abs(sourcePath)
+	if err != nil {
+		return err
+	}
+
+	targetPath, err = filepath.Abs(targetPath)
+	if err != nil {
+		return err
+	}
+
+	sourcePath = filepath.Clean(sourcePath)
+	targetPath = filepath.Clean(targetPath)
+
+	if targetPath == string(filepath.Separator) {
+		return fmt.Errorf("refusing to clean root directory")
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		homeDir, _ = filepath.Abs(homeDir)
+		homeDir = filepath.Clean(homeDir)
+
+		if targetPath == homeDir {
+			return fmt.Errorf("refusing to clean home directory")
+		}
+	}
+
+	if sourcePath == targetPath {
+		return fmt.Errorf("refusing to clean target: source and target are the same directory")
+	}
+
+	if pathInside(sourcePath, targetPath) {
+		return fmt.Errorf("refusing to clean target: source directory is inside target directory")
+	}
+
+	if err := os.RemoveAll(targetPath); err != nil {
+		return err
+	}
+
+	return os.MkdirAll(targetPath, 0755)
+}
+
+func expandPathLoose(path string) (string, error) {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return "", fmt.Errorf("path is empty")
+	}
+
+	if path == "~" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+
+		return homeDir, nil
+	}
+
+	if strings.HasPrefix(path, "~/") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+
+		return filepath.Join(homeDir, strings.TrimPrefix(path, "~/")), nil
+	}
+
+	return path, nil
+}
+
+func pathInside(child string, parent string) bool {
+	child = filepath.Clean(child)
+	parent = filepath.Clean(parent)
+
+	rel, err := filepath.Rel(parent, child)
+	if err != nil {
+		return false
+	}
+
+	return rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func finishPipeline() error {
+	time.Sleep(500 * time.Millisecond)
+	return nil
+}
+
+func defaultStages(mode Mode, classifierMode ClassifierMode) []Stage {
+	actionTitle := "Start FUSE"
+	actionDesc := "Mounting virtual organized filesystem view."
+
+	if mode == ModeMove {
+		actionTitle = "Move Files"
+		actionDesc = "Moving files into sorted target folders."
+	}
+
+	if mode == ModeCopy {
+		actionTitle = "Copy Files"
+		actionDesc = "Copying files into sorted target folders."
+	}
+
+	classifierDesc := "Classifying documents using fast TF_IDF classifier."
+
+	if classifierMode == ClassifierLLM {
+		classifierDesc = "Classifying documents using slower LLM classifier."
+	}
+
+	return []Stage{
+		{
+			Title:       "Scan Folders/Files",
+			Description: "Scanning source folder and collecting document metadata.",
+			Status:      StagePending,
+		},
+		{
+			Title:       "Classify / Distribute Files",
+			Description: classifierDesc,
+			Status:      StagePending,
+		},
+		{
+			Title:       actionTitle,
+			Description: actionDesc,
+			Status:      StagePending,
+		},
+		{
+			Title:       "Ready",
+			Description: "TidyFS pipeline finished successfully.",
+			Status:      StagePending,
+		},
+	}
+}
+
+func (m *Model) updateFocus() {
+	for i := range m.inputs {
+		if i == m.focus {
+			m.inputs[i].Focus()
+		} else {
+			m.inputs[i].Blur()
+		}
+	}
+}
+
+func (m *Model) toggleMode() {
+	switch m.mode {
+	case ModeFuse:
+		m.mode = ModeMove
+	case ModeMove:
+		m.mode = ModeCopy
+	default:
+		m.mode = ModeFuse
+	}
+}
+
+func (m *Model) toggleClassifierMode() {
+	switch m.classifierMode {
+	case ClassifierTFIDF:
+		m.classifierMode = ClassifierLLM
+	default:
+		m.classifierMode = ClassifierTFIDF
+	}
+}
+
+func (m Model) View() string {
+	var body string
+
+	switch m.screen {
+	case ScreenForm:
+		body = m.viewForm()
+
+	case ScreenPipeline:
+		body = m.viewPipeline()
+
+	case ScreenDone:
+		body = m.viewDone()
+	}
+
+	card := renderCard("TidyFS", contentStyle.Render(body))
+
+	return lipgloss.Place(
+		m.width,
+		m.height,
+		lipgloss.Center,
+		lipgloss.Center,
+		card,
+	)
+}
+
+func (m Model) viewForm() string {
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		renderHeader(),
+		"",
+		m.renderInput(0, "Source folder"),
+		"",
+		m.renderInput(1, "Target folder"),
+		"",
+		m.renderModePicker(),
+		"",
+		m.renderCleanTargetPicker(),
+		"",
+		m.renderClassifierModePicker(),
+		"",
+		helpStyle.Render("tab/up/down navigate  •  left/right/space toggle  •"),
+		helpStyle.Render("enter start pipeline  •  esc quit"),
+	)
+}
+
+func (m Model) viewPipeline() string {
+	summary := lipgloss.JoinVertical(
+		lipgloss.Left,
+		subtitleStyle.Render("Pipeline is running"),
+		descStyle.Render("TidyFS is processing your files. UI will stay open."),
+		"",
+		descStyle.Render("Source:     "+emptyFallback(m.result.Source, "not selected")),
+		descStyle.Render("Target:     "+emptyFallback(m.result.Target, "not selected")),
+		descStyle.Render("Mode:       "+string(m.result.Mode)),
+		descStyle.Render("Clean:      "+boolLabel(m.result.CleanTarget)),
+		descStyle.Render("Classifier: "+classifierLabel(m.result.ClassifierMode)),
+	)
+
+	var stageViews []string
+
+	for i, stage := range m.stages {
+		stageViews = append(stageViews, renderStage(i, stage, m.pulse))
+	}
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		summary,
+		"",
+		strings.Join(stageViews, "\n"),
+		"",
+		helpStyle.Render("esc back  •  ctrl+c quit"),
+	)
+}
+
+func (m Model) viewDone() string {
+	title := successStyle.Render("Pipeline finished")
+
+	if m.err != nil {
+		title = errorStyle.Render("Pipeline failed")
+	}
+
+	var message string
+
+	if m.err != nil {
+		message = errorStyle.Render(m.err.Error())
+	} else if m.result.Mode == ModeFuse {
+		message = descStyle.Render("FUSE is mounted. Press q/ctrl+c to unmount and exit.")
+	} else {
+		message = descStyle.Render("All stages completed successfully.")
+	}
+
+	var stageViews []string
+
+	for i, stage := range m.stages {
+		stageViews = append(stageViews, renderStage(i, stage, false))
+	}
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		title,
+		message,
+		"",
+		descStyle.Render("Source:     "+emptyFallback(m.result.Source, "not selected")),
+		descStyle.Render("Target:     "+emptyFallback(m.result.Target, "not selected")),
+		descStyle.Render("Mode:       "+string(m.result.Mode)),
+		descStyle.Render("Clean:      "+boolLabel(m.result.CleanTarget)),
+		descStyle.Render("Classifier: "+classifierLabel(m.result.ClassifierMode)),
+		"",
+		strings.Join(stageViews, "\n"),
+		"",
+		helpStyle.Render("enter/esc back to start  •  q quit  •  ctrl+c graceful shutdown"),
+	)
+}
+
+func renderHeader() string {
+	logo := lipgloss.NewStyle().
+		Foreground(colorAccent2).
+		Bold(true).
+		Render("✦ TidyFS")
+
+	title := subtitleStyle.Render("Smart file organizer")
+	desc := descStyle.Render("Scan, classify and prepare files for safe organization.")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		logo,
+		title,
+		desc,
+	)
+}
+
+func (m Model) renderInput(index int, label string) string {
+	box := inputBoxStyle
+
+	if m.focus == index {
+		box = inputBoxFocusedStyle
+	}
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		labelStyle.Render(label),
+		box.Render(m.inputs[index].View()),
+	)
+}
+
+func (m Model) renderModePicker() string {
+	label := labelStyle.Render("Action mode")
+
+	fuseStyle := modeStyle
+	moveStyle := modeStyle
+	copyStyle := modeStyle
+
+	if m.focus == 2 {
+		fuseStyle = modeFocusedStyle
+		moveStyle = modeFocusedStyle
+		copyStyle = modeFocusedStyle
+	}
+
+	if m.mode == ModeFuse {
+		if m.focus == 2 {
+			fuseStyle = modeActiveFocusedStyle
+		} else {
+			fuseStyle = modeActiveStyle
+		}
+	}
+
+	if m.mode == ModeMove {
+		if m.focus == 2 {
+			moveStyle = modeActiveFocusedStyle
+		} else {
+			moveStyle = modeActiveStyle
+		}
+	}
+
+	if m.mode == ModeCopy {
+		if m.focus == 2 {
+			copyStyle = modeActiveFocusedStyle
+		} else {
+			copyStyle = modeActiveStyle
+		}
+	}
+
+	fuse := fuseStyle.Render("fuse")
+	move := moveStyle.Render("move")
+	copy := copyStyle.Render("copy")
+
+	hint := descStyle.Render("fuse: virtual view  •  move: move files  •  copy: copy files")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		label,
+		lipgloss.JoinHorizontal(lipgloss.Top, fuse, "  ", move, "  ", copy),
+		hint,
+	)
+}
+
+func (m Model) renderCleanTargetPicker() string {
+	label := labelStyle.Render("Clean target before work")
+
+	offStyle := modeStyle
+	onStyle := modeStyle
+
+	if m.focus == 3 {
+		offStyle = modeFocusedStyle
+		onStyle = modeFocusedStyle
+	}
+
+	if !m.cleanTarget {
+		if m.focus == 3 {
+			offStyle = modeActiveFocusedStyle
+		} else {
+			offStyle = modeActiveStyle
+		}
+	}
+
+	if m.cleanTarget {
+		if m.focus == 3 {
+			onStyle = modeActiveFocusedStyle
+		} else {
+			onStyle = modeActiveStyle
+		}
+	}
+
+	off := offStyle.Render("no")
+	on := onStyle.Render("yes")
+
+	hint := descStyle.Render("yes: delete everything inside target before move/copy")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		label,
+		lipgloss.JoinHorizontal(lipgloss.Top, off, "  ", on),
+		hint,
+	)
+}
+
+func (m Model) renderClassifierModePicker() string {
+	label := labelStyle.Render("Classifier")
+
+	fastStyle := modeStyle
+	slowStyle := modeStyle
+
+	if m.focus == 4 {
+		fastStyle = modeFocusedStyle
+		slowStyle = modeFocusedStyle
+	}
+
+	if m.classifierMode == ClassifierTFIDF {
+		if m.focus == 4 {
+			fastStyle = modeActiveFocusedStyle
+		} else {
+			fastStyle = modeActiveStyle
+		}
+	}
+
+	if m.classifierMode == ClassifierLLM {
+		if m.focus == 4 {
+			slowStyle = modeActiveFocusedStyle
+		} else {
+			slowStyle = modeActiveStyle
+		}
+	}
+
+	fast := fastStyle.Render("TF_IDF")
+	slow := slowStyle.Render("LLM")
+
+	hint := descStyle.Render("TF_IDF: fast local classifier  •  LLM: slower but smarter classification")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		label,
+		lipgloss.JoinHorizontal(lipgloss.Top, fast, "  ", slow),
+		hint,
+	)
+}
+
+func renderStage(index int, stage Stage, pulse bool) string {
+	icon := "○"
+	iconStyle := lipgloss.NewStyle().Foreground(colorDim)
+	title := lipgloss.NewStyle().Foreground(colorMuted).Render(stage.Title)
+
+	switch stage.Status {
+	case StagePending:
+		icon = "○"
+		iconStyle = lipgloss.NewStyle().Foreground(colorDim)
+		title = lipgloss.NewStyle().Foreground(colorMuted).Render(stage.Title)
+
+	case StageRunning:
+		icon = "●"
+
+		runningColor := colorOrange
+		if pulse {
+			runningColor = colorYellow
+		}
+
+		iconStyle = lipgloss.NewStyle().Foreground(runningColor)
+		title = lipgloss.NewStyle().Foreground(colorText).Bold(true).Render(stage.Title + "…")
+
+	case StageDone:
+		icon = "✓"
+		iconStyle = lipgloss.NewStyle().Foreground(colorGreen)
+		title = lipgloss.NewStyle().Foreground(colorText).Render(stage.Title)
+
+	case StageFailed:
+		icon = "✕"
+		iconStyle = lipgloss.NewStyle().Foreground(colorRed)
+		title = lipgloss.NewStyle().Foreground(colorRed).Bold(true).Render(stage.Title)
+	}
+
+	number := lipgloss.NewStyle().
+		Foreground(colorDim).
+		Render(fmt.Sprintf("%d.", index+1))
+
+	description := descStyle.Render("   " + stage.Description)
+
+	line := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		number,
+		" ",
+		iconStyle.Render(icon),
+		" ",
+		title,
+	)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		line,
+		description,
+	)
+}
+
+func renderCard(title string, body string) string {
+	borderColor := colorAccent
+
+	titleRendered := titleStyle.Render(" " + title + " ")
+	titleWidth := lipgloss.Width(titleRendered)
+
+	innerWidth := cardWidth - 2
+
+	leftLine := strings.Repeat("─", 4)
+	rightLine := strings.Repeat("─", max(0, innerWidth-titleWidth-4))
+
+	top := lipgloss.NewStyle().
+		Foreground(borderColor).
+		Render("╭"+leftLine) +
+		titleRendered +
+		lipgloss.NewStyle().
+			Foreground(borderColor).
+			Render(rightLine+"╮")
+
+	bodyLines := strings.Split(body, "\n")
+	renderedLines := make([]string, 0, len(bodyLines))
+
+	for _, line := range bodyLines {
+		lineWidth := lipgloss.Width(line)
+		padding := max(0, innerWidth-lineWidth)
+
+		renderedLines = append(
+			renderedLines,
+			lipgloss.NewStyle().Foreground(borderColor).Render("│")+
+				line+
+				strings.Repeat(" ", padding)+
+				lipgloss.NewStyle().Foreground(borderColor).Render("│"),
+		)
+	}
+
+	bottom := lipgloss.NewStyle().
+		Foreground(borderColor).
+		Render("╰" + strings.Repeat("─", innerWidth) + "╯")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		top,
+		strings.Join(renderedLines, "\n"),
+		bottom,
+	)
+}
+
+func emptyFallback(value string, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+
+	return value
+}
+
+func boolLabel(value bool) string {
+	if value {
+		return "yes"
+	}
+
+	return "no"
+}
+
+func classifierLabel(value ClassifierMode) string {
+	switch value {
+	case ClassifierLLM:
+		return "LLM"
+	default:
+		return "TF_IDF"
+	}
+}
+</file>
+
+<file path=".gitignore">
+# Go
+/bin/
+/obj/
+/pkg/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+*.cover
+*.pprof
+
+# Go workspace
+/go.work
+/go.work.sum
+
+# Dependencies
+/vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.pyre/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build artifacts
+/build/
+/dist/
+/*.egg-info/
+
+# Logs
+*.log
+
+# Data outputs
+/files/*.json
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+</file>
+
+<file path="install.sh">
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+APP_NAME="tidyfs"
+INSTALL_DIR="/usr/local/bin"
+
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BINARY_PATH="${PROJECT_DIR}/bin/${APP_NAME}"
+INSTALL_PATH="${INSTALL_DIR}/${APP_NAME}"
+
+echo "Installing ${APP_NAME}..."
+
+if ! command -v make >/dev/null 2>&1; then
+  echo "Error: make is not installed or not in PATH"
+  exit 1
+fi
+
+if ! command -v go >/dev/null 2>&1; then
+  echo "Error: Go is not installed or not in PATH"
+  exit 1
+fi
+
+cd "${PROJECT_DIR}"
+
+echo "Building with Makefile..."
+make build
+
+if [ ! -f "${BINARY_PATH}" ]; then
+  echo "Error: binary not found: ${BINARY_PATH}"
+  exit 1
+fi
+
+chmod +x "${BINARY_PATH}"
+
+echo "Installing to ${INSTALL_PATH}..."
+
+if [ -w "${INSTALL_DIR}" ]; then
+  cp "${BINARY_PATH}" "${INSTALL_PATH}"
+else
+  sudo cp "${BINARY_PATH}" "${INSTALL_PATH}"
+fi
+
+echo "Done."
+echo "Now you can run:"
+echo "  ${APP_NAME}"
+</file>
+
+<file path="requirements.txt">
+scikit-learn
+pypdf
+python-docx
+joblib
+ollama
+</file>
+
+<file path="README.md">
+<p align="center">
+  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/header.png" alt="TidyFS Header" width="100%">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black" alt="Linux">
+  <img src="https://img.shields.io/badge/FUSE-8A2BE2?style=flat" alt="FUSE">
+  <img src="https://img.shields.io/badge/TF--IDF-9B5DE5?style=flat" alt="TF-IDF">
+  <img src="https://img.shields.io/badge/Logistic_Regression-6C63FF?style=flat" alt="Logistic Regression">
+</p>
+
+---
+
+**TidyFS** is a smart file organizer for Linux with a terminal user interface. It scans a folder with documents, classifies files by their content and filename, and then displays or organizes them into clear categories.
+
+The project is written in **Go** and **Python**:
+
+* Go is responsible for the TUI, file scanning, filesystem operations, and FUSE;
+* Python is responsible for text extraction and ML-based document classification.
+
+## Features
+
+* Convenient TUI directly in the terminal.
+* Automatic document classification by category.
+* Supported modes:
+
+  * `fuse` — virtual filesystem without moving files;
+  * `move` — moves files into a sorted structure;
+  * `copy` — copies files into a sorted structure.
+* Supported document formats: `.pdf`, `.txt`, `.doc`, `.docx`, `.md`.
+* Text preview extraction from PDF and DOCX files.
+* Classification using an ML model based on TF-IDF features and Logistic Regression.
+* Additional filename-based rules for common document types: resumes, certificates, lab reports, notes, licenses, tickets, statements, etc.
+* Protection against dangerous directory cleanup: TidyFS refuses to clean `/`, the home directory, and conflicting source/target paths.
+
+## Preview
+<p align="left">
+  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Header" width="40%">
+</p>
+
+## How It Works
+
+TidyFS follows a pipeline of several steps:
+
+1. **Scanning**  
+   The program walks through the source folder and collects a list of supported files.
+
+2. **Text Extraction**  
+   For text files, a small fragment of the content is extracted. For PDF and DOCX files, a Python extractor is used.
+
+3. **Classification**  
+   Each file is classified by its filename and content. The project uses a trained model stored in `classifier/models/classifier.joblib`.
+
+4. **Organization**  
+   Depending on the selected mode, TidyFS either mounts a virtual tree via FUSE or copies/moves files into the target directory.
+
+Example output structure:
+
+```text
+~/TidyFS/
+├── Career/
+│   ├── Resume/
+│   └── Internship/
+├── Documents/
+│   └── Personal/
+├── Education/
+│   ├── Assignments/
+│   ├── Materials/
+│   └── Project/
+├── Finance/
+├── IT/
+│   └── Licenses/
+└── Media/
+    └── Transcript/
+```
+
+## Usage Examples
+
+Run TidyFS:
+
+```bash
+tidyfs
+```
+
+Or run it from source:
+
+```bash
+make run
+```
+
+After launching the TUI, specify:
+
+* **Source folder** — the folder to organize, for example `~/Downloads`;
+* **Target folder** — the folder for the result, for example `~/TidyFS`;
+* **Action mode** — the operation mode: `fuse`, `move`, or `copy`;
+* **Clean target before work** — whether to clean the target directory before copying/moving files.
+
+### `fuse` Mode
+
+```text
+Source: ~/Downloads
+Target: ~/TidyFS
+Mode:   fuse
+```
+
+In this mode, TidyFS creates a virtual representation of the files. The original files stay in place, while an organized category structure appears in the target folder.
+
+This is the safest mode for the first run.
+
+### `copy` Mode
+
+```text
+Source: ~/Downloads
+Target: ~/TidyFS
+Mode:   copy
+```
+
+TidyFS copies files from the source folder into the target folder, organizing them by category.
+
+### `move` Mode
+
+```text
+Source: ~/Downloads
+Target: ~/TidyFS
+Mode:   move
+```
+
+TidyFS moves files from the source folder into the target folder. Use this mode only if you are sure the classification results are correct.
+
+## Installation
+
+### Requirements
+
+* Linux
+* Go
+* Python 3
+* `make`
+* Python `venv`
+* FUSE for the virtual filesystem mode
+
+Python dependencies:
+
+```text
+scikit-learn
+pypdf
+python-docx
+joblib
+ollama
+```
+
+Go dependencies are installed through `go mod`.
+
+## Installing Dependencies by Distribution
+
+### Debian / Ubuntu
+
+```bash
+sudo apt update
+sudo apt install -y git make golang python3 python3-venv python3-pip fuse3
+```
+
+### Fedora
+
+```bash
+sudo dnf install -y git make golang python3 python3-pip python3-virtualenv fuse3
+```
+
+### Arch Linux / Manjaro
+
+```bash
+sudo pacman -S --needed git make go python python-pip fuse3
+```
+
+### openSUSE
+
+```bash
+sudo zypper install git make go python3 python3-pip python3-virtualenv fuse3
+```
+
+## Building from Source
+
+Clone the repository:
+
+```bash
+git clone https://github.com/xSarumo/TidyFS.git
+cd TidyFS
+```
+
+Install dependencies and build the project:
+
+```bash
+make
+```
+
+This command runs:
+
+```bash
+make deps
+make build
+```
+
+After building, the binary will be available here:
+
+```text
+bin/tidyfs
+```
+
+Run it:
+
+```bash
+./bin/tidyfs
+```
+
+## System Installation
+
+The repository includes an `install.sh` script that builds the binary and copies it to `/usr/local/bin`:
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+After that, TidyFS can be launched from anywhere:
+
+```bash
+tidyfs
+```
+
+## Makefile Commands
+
+```bash
+make              # install dependencies and build the project
+make deps         # install Go and Python dependencies
+make go-deps      # run go mod tidy and go mod download
+make py-venv      # create a Python virtual environment
+make py-deps      # install Python dependencies
+make build        # build the binary into bin/tidyfs
+make run          # build and run the application
+make dev          # install dependencies, build, and run
+make clean        # remove bin/
+make py-clean     # remove .venv/
+make clean-all    # remove bin, .venv, pycache, and generated JSON files
+```
+
+## Project Structure
+
+```text
+TidyFS/
+├── carrier/              # moving, copying, and FUSE file representation
+├── classifier/           # Python classifier, model, and training data
+│   ├── models/
+│   │   └── classifier.joblib
+│   ├── classifier.py
+│   ├── train.ipynb
+│   └── training_data.json
+├── classifier_runner/    # running the Python classifier from Go
+├── exporter/             # saving intermediate JSON files
+├── extractor/            # extracting text from PDF/DOCX files
+├── files/                # intermediate files: files.json and classified_files.json
+├── project_path/         # project paths
+├── scanner/              # scanning source directories
+├── src/                  # Go application entry point
+├── tui/                  # terminal user interface
+├── Makefile
+├── install.sh
+├── go.mod
+└── requirements.txt
+```
+
+## ML Classification
+
+The classifier is located in `classifier/classifier.py`.
+
+It uses:
+
+* `TfidfVectorizer` for word-based features;
+* `TfidfVectorizer` for character n-grams;
+* `FeatureUnion` to combine features;
+* `LogisticRegression` for final classification.
+
+Before making an ML prediction, TidyFS also checks the filename using a set of regular expressions. This helps the system recognize obvious documents more accurately, such as resumes, certificates, lab reports, notes, licenses, and financial files.
+
+## Supported Categories
+
+Currently, TidyFS organizes files into the following main categories:
+
+* `Career/Resume`
+* `Career/Internship`
+* `Documents/Personal`
+* `Education/Assignments`
+* `Education/Materials`
+* `Education/Project`
+* `Finance`
+* `IT/Licenses`
+* `Media/Transcript`
+
+Some related categories are automatically merged. For example, `Education/Homework` and `Education/Labworks` are placed into `Education/Assignments`.
+
+## Generated Files
+
+During execution, TidyFS creates intermediate JSON files:
+
+```text
+files/files.json
+files/classified_files.json
+```
+
+`files.json` contains discovered files and their text previews.  
+`classified_files.json` contains classification results and is used by the FUSE/copy/move modes.
+
+## Safety
+
+TidyFS handles filesystem operations carefully:
+
+* in `fuse` mode, original files are not moved;
+* in `copy` mode, original files stay in place;
+* in `move` mode, files are actually moved;
+* when filenames conflict, TidyFS creates unique names such as `file (1).pdf`;
+* target cleanup is protected against deleting the root directory, the home directory, and conflicting paths.
+
+For the first run, it is recommended to use `fuse` or `copy` mode.
+
+## Development
+
+Install dependencies and run the development version:
+
+```bash
+make dev
+```
+
+Install Python dependencies separately:
+
+```bash
+make py-deps
+```
+
+Install Go dependencies separately:
+
+```bash
+make go-deps
+```
+
+Rebuild from scratch:
+
+```bash
+make rebuild
+```
+
+Remove all generated files:
+
+```bash
+make clean-all
+```
+
+## License
+
+This project is distributed under the license specified in the [`LICENSE`](LICENSE) file.
+</file>
+
+</files>

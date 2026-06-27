@@ -21,6 +21,13 @@ import (
 
 type Mode string
 
+type ClassifierMode string
+
+const (
+	ClassifierTFIDF ClassifierMode = "tf_idf"
+	ClassifierLLM   ClassifierMode = "llm"
+)
+
 const (
 	ModeFuse Mode = "fuse"
 	ModeMove Mode = "move"
@@ -45,10 +52,11 @@ const (
 )
 
 type Result struct {
-	Source      string
-	Target      string
-	Mode        Mode
-	CleanTarget bool
+	Source         string
+	Target         string
+	Mode           Mode
+	CleanTarget    bool
+	ClassifierMode ClassifierMode
 }
 
 type Stage struct {
@@ -58,10 +66,11 @@ type Stage struct {
 }
 
 type Model struct {
-	inputs      []textinput.Model
-	focus       int
-	mode        Mode
-	cleanTarget bool
+	inputs         []textinput.Model
+	focus          int
+	mode           Mode
+	cleanTarget    bool
+	classifierMode ClassifierMode
 
 	width  int
 	height int
@@ -81,7 +90,7 @@ type Model struct {
 
 const cardWidth = 76
 const inputWidth = 54
-const maxFocus = 3
+const maxFocus = 4
 
 var (
 	colorText    = lipgloss.Color("#e7e9ee")
@@ -183,13 +192,14 @@ func New() Model {
 	target.PlaceholderStyle = lipgloss.NewStyle().Foreground(colorDim)
 
 	return Model{
-		inputs:      []textinput.Model{source, target},
-		mode:        ModeFuse,
-		cleanTarget: false,
-		screen:      ScreenForm,
-		stages:      defaultStages(ModeFuse),
-		ctx:         ctx,
-		cancel:      cancel,
+		inputs:         []textinput.Model{source, target},
+		mode:           ModeFuse,
+		cleanTarget:    false,
+		classifierMode: ClassifierTFIDF,
+		screen:         ScreenForm,
+		stages:         defaultStages(ModeFuse, ClassifierTFIDF),
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 }
 
@@ -240,7 +250,7 @@ func (m *Model) resetToForm() {
 	m.err = nil
 	m.currentStage = 0
 	m.pulse = false
-	m.stages = defaultStages(m.mode)
+	m.stages = defaultStages(m.mode, m.classifierMode)
 	m.focus = 0
 	m.updateFocus()
 }
@@ -345,12 +355,18 @@ func (m Model) updateFormKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	case "left", "right", " ":
 		if m.focus == 2 {
 			m.toggleMode()
-			m.stages = defaultStages(m.mode)
+			m.stages = defaultStages(m.mode, m.classifierMode)
 			return m, nil
 		}
 
 		if m.focus == 3 {
 			m.cleanTarget = !m.cleanTarget
+			return m, nil
+		}
+
+		if m.focus == 4 {
+			m.toggleClassifierMode()
+			m.stages = defaultStages(m.mode, m.classifierMode)
 			return m, nil
 		}
 
@@ -362,15 +378,16 @@ func (m Model) updateFormKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 		}
 
 		m.result = Result{
-			Source:      strings.TrimSpace(m.inputs[0].Value()),
-			Target:      strings.TrimSpace(m.inputs[1].Value()),
-			Mode:        m.mode,
-			CleanTarget: m.cleanTarget,
+			Source:         strings.TrimSpace(m.inputs[0].Value()),
+			Target:         strings.TrimSpace(m.inputs[1].Value()),
+			Mode:           m.mode,
+			CleanTarget:    m.cleanTarget,
+			ClassifierMode: m.classifierMode,
 		}
 
 		m.screen = ScreenPipeline
 		m.currentStage = 0
-		m.stages = defaultStages(m.mode)
+		m.stages = defaultStages(m.mode, m.classifierMode)
 		m.stages[0].Status = StageRunning
 		m.pulse = false
 
@@ -418,7 +435,7 @@ func runStage(ctx context.Context, index int, result Result) tea.Cmd {
 			err = scanFoldersAndFiles(result.Source)
 
 		case 1:
-			err = classifyAndDistribute()
+			err = classifyAndDistribute(result.ClassifierMode)
 
 		case 2:
 			if result.Mode == ModeFuse {
@@ -459,8 +476,8 @@ func scanFoldersAndFiles(source string) error {
 	return exporter.SaveJSON(projectpath.FilesJSON(), files)
 }
 
-func classifyAndDistribute() error {
-	return classifier_runner.RunClassifier(projectpath.Root())
+func classifyAndDistribute(mode ClassifierMode) error {
+	return classifier_runner.RunClassifier(projectpath.Root(), string(mode))
 }
 
 func runFuse(ctx context.Context, target string) error {
@@ -577,7 +594,7 @@ func finishPipeline() error {
 	return nil
 }
 
-func defaultStages(mode Mode) []Stage {
+func defaultStages(mode Mode, classifierMode ClassifierMode) []Stage {
 	actionTitle := "Start FUSE"
 	actionDesc := "Mounting virtual organized filesystem view."
 
@@ -591,6 +608,12 @@ func defaultStages(mode Mode) []Stage {
 		actionDesc = "Copying files into sorted target folders."
 	}
 
+	classifierDesc := "Classifying documents using fast TF_IDF classifier."
+
+	if classifierMode == ClassifierLLM {
+		classifierDesc = "Classifying documents using slower LLM classifier."
+	}
+
 	return []Stage{
 		{
 			Title:       "Scan Folders/Files",
@@ -599,7 +622,7 @@ func defaultStages(mode Mode) []Stage {
 		},
 		{
 			Title:       "Classify / Distribute Files",
-			Description: "Classifying documents and preparing category layout.",
+			Description: classifierDesc,
 			Status:      StagePending,
 		},
 		{
@@ -633,6 +656,15 @@ func (m *Model) toggleMode() {
 		m.mode = ModeCopy
 	default:
 		m.mode = ModeFuse
+	}
+}
+
+func (m *Model) toggleClassifierMode() {
+	switch m.classifierMode {
+	case ClassifierTFIDF:
+		m.classifierMode = ClassifierLLM
+	default:
+		m.classifierMode = ClassifierTFIDF
 	}
 }
 
@@ -674,6 +706,8 @@ func (m Model) viewForm() string {
 		"",
 		m.renderCleanTargetPicker(),
 		"",
+		m.renderClassifierModePicker(),
+		"",
 		helpStyle.Render("tab/up/down navigate  •  left/right/space toggle  •"),
 		helpStyle.Render("enter start pipeline  •  esc quit"),
 	)
@@ -685,10 +719,11 @@ func (m Model) viewPipeline() string {
 		subtitleStyle.Render("Pipeline is running"),
 		descStyle.Render("TidyFS is processing your files. UI will stay open."),
 		"",
-		descStyle.Render("Source: "+emptyFallback(m.result.Source, "not selected")),
-		descStyle.Render("Target: "+emptyFallback(m.result.Target, "not selected")),
-		descStyle.Render("Mode:   "+string(m.result.Mode)),
-		descStyle.Render("Clean:  "+boolLabel(m.result.CleanTarget)),
+		descStyle.Render("Source:     "+emptyFallback(m.result.Source, "not selected")),
+		descStyle.Render("Target:     "+emptyFallback(m.result.Target, "not selected")),
+		descStyle.Render("Mode:       "+string(m.result.Mode)),
+		descStyle.Render("Clean:      "+boolLabel(m.result.CleanTarget)),
+		descStyle.Render("Classifier: "+classifierLabel(m.result.ClassifierMode)),
 	)
 
 	var stageViews []string
@@ -735,10 +770,11 @@ func (m Model) viewDone() string {
 		title,
 		message,
 		"",
-		descStyle.Render("Source: "+emptyFallback(m.result.Source, "not selected")),
-		descStyle.Render("Target: "+emptyFallback(m.result.Target, "not selected")),
-		descStyle.Render("Mode:   "+string(m.result.Mode)),
-		descStyle.Render("Clean:  "+boolLabel(m.result.CleanTarget)),
+		descStyle.Render("Source:     "+emptyFallback(m.result.Source, "not selected")),
+		descStyle.Render("Target:     "+emptyFallback(m.result.Target, "not selected")),
+		descStyle.Render("Mode:       "+string(m.result.Mode)),
+		descStyle.Render("Clean:      "+boolLabel(m.result.CleanTarget)),
+		descStyle.Render("Classifier: "+classifierLabel(m.result.ClassifierMode)),
 		"",
 		strings.Join(stageViews, "\n"),
 		"",
@@ -868,6 +904,46 @@ func (m Model) renderCleanTargetPicker() string {
 	)
 }
 
+func (m Model) renderClassifierModePicker() string {
+	label := labelStyle.Render("Classifier")
+
+	fastStyle := modeStyle
+	slowStyle := modeStyle
+
+	if m.focus == 4 {
+		fastStyle = modeFocusedStyle
+		slowStyle = modeFocusedStyle
+	}
+
+	if m.classifierMode == ClassifierTFIDF {
+		if m.focus == 4 {
+			fastStyle = modeActiveFocusedStyle
+		} else {
+			fastStyle = modeActiveStyle
+		}
+	}
+
+	if m.classifierMode == ClassifierLLM {
+		if m.focus == 4 {
+			slowStyle = modeActiveFocusedStyle
+		} else {
+			slowStyle = modeActiveStyle
+		}
+	}
+
+	fast := fastStyle.Render("TF_IDF")
+	slow := slowStyle.Render("LLM")
+
+	hint := descStyle.Render("TF_IDF: fast local classifier  •  LLM: slower but smarter classification")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		label,
+		lipgloss.JoinHorizontal(lipgloss.Top, fast, "  ", slow),
+		hint,
+	)
+}
+
 func renderStage(index int, stage Stage, pulse bool) string {
 	icon := "○"
 	iconStyle := lipgloss.NewStyle().Foreground(colorDim)
@@ -984,4 +1060,13 @@ func boolLabel(value bool) string {
 	}
 
 	return "no"
+}
+
+func classifierLabel(value ClassifierMode) string {
+	switch value {
+	case ClassifierLLM:
+		return "LLM"
+	default:
+		return "TF_IDF"
+	}
 }
