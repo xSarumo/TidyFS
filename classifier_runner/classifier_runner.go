@@ -6,12 +6,19 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
-func RunClassifier(projectRoot string) error {
+func RunClassifier(projectRoot string, mode string) error {
+
+	var mode_file strings.Builder
+
+	mode_file.WriteString("classifier_")
+	mode_file.WriteString(mode)
+	mode_file.WriteString(".py")
 
 	pythonPath := filepath.Join(projectRoot, ".venv", "bin", "python")
-	scriptPath := filepath.Join(projectRoot, "classifier", "classifier.py")
+	scriptPath := filepath.Join(projectRoot, "classifier", mode_file.String())
 
 	if _, err := os.Stat(pythonPath); err != nil {
 		return fmt.Errorf("venv python not found: %s\nrun: make py-deps", pythonPath)

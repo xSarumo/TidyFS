@@ -3,11 +3,13 @@ import re
 import sys
 import joblib
 from pathlib import Path
+from extractor.extractor import extract_preview
+
+import normalizer
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from extractor.extractor import extract_preview
 
 FILES_PATH = PROJECT_ROOT / "files" / "files.json"
 OUTPUT_PATH = PROJECT_ROOT / "files" / "classified_files.json"
@@ -24,13 +26,18 @@ CATEGORY_MERGE_MAP = {
 
     "Media/Books": "Education/Materials",
     "Education/Materials": "Education/Materials",
+    "Data/Datasets": "Education/Materials",
 
     "Career/Internship": "Career/Internship",
+
     "Career/Resume": "Career/Resume",
-    "Data/Datasets": "Education/Materials",
+
     "Education/Project": "Education/Project",
+
     "Finance": "Finance",
+
     "IT/Licenses": "IT/Licenses",
+
     "Media/Transcript": "Media/Transcript",
 }
 
@@ -90,30 +97,9 @@ FILENAME_OVERRIDES = [
 ]
 
 
-def normalize_text(text: str) -> str:
-    return (
-        str(text or "")
-        .lower()
-        .replace("_", " ")
-        .replace("-", " ")
-        .replace(".", " ")
-        .replace("ё", "е")
-        .strip()
-    )
-
-
-def normalize_filename(text: str) -> str:
-    return (
-        str(text or "")
-        .lower()
-        .replace("ё", "е")
-        .strip()
-    )
-
-
 def classify_by_filename(file: dict) -> str | None:
-    name = normalize_filename(file.get("name", ""))
-    path = normalize_filename(file.get("path", ""))
+    name = normalizer.normalize_filename(file.get("name", ""))
+    path = normalizer.normalize_filename(file.get("path", ""))
 
     filename_text = name
 
@@ -132,7 +118,7 @@ def load_model():
 
 
 def predict_category(text: str, model):
-    text = normalize_text(text)
+    text = normalizer.normalize_text(text)
 
     prediction = model.predict([text])[0]
 
@@ -157,13 +143,13 @@ def classify_file(file: dict, model):
             "category": merge_category(filename_category),
         }
 
-    name = normalize_text(file.get("name", ""))
-    file_text = normalize_text(file.get("text", ""))
+    name = normalizer.normalize_text(file.get("name", ""))
+    file_text = normalizer.normalize_text(file.get("text", ""))
 
     if not file_text:
         path = file.get("path", "")
         ext = file.get("ext", "")
-        file_text = normalize_text(extract_preview(path, ext) or "")
+        file_text = normalizer.normalize_text(extract_preview(path, ext) or "")
 
     combined_text = f"{name}\n{file_text}".strip()
 

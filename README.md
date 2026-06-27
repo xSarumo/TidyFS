@@ -147,6 +147,7 @@ scikit-learn
 pypdf
 python-docx
 joblib
+ollama
 ```
 
 Go dependencies are installed through `go mod`.
