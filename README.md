@@ -48,7 +48,7 @@ The project is written in **Go** and **Python**:
 ## Preview
 
 <p align="left">
-  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Preview" width="40%">
+  <img src="https://github.com/xSarumo/xSarumo/blob/main/TidyFS/preview.png" alt="TidyFS Preview" width="65%">
 </p>
 
 ## How It Works
